@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flip 7 Pro</title>
+<style>
+body{font-family:Arial;max-width:1400px;margin:auto;padding:15px}
+table{border-collapse:collapse;width:100%;margin-bottom:15px}
+th,td{border:1px solid #ccc;padding:6px;text-align:center}
+th{background:#f0f0f0}
+button{padding:8px 12px;margin:3px}
+.leader1{background:#ffd700}.leader2{background:#c0c0c0}.leader3{background:#cd7f32}
+input[type=number]{width:70px}
+.panel{padding:10px;border:1px solid #ddd;margin-bottom:15px}
+</style>
+</head>
+<body>
+<h1>🎲 Flip 7 Scoreboard Pro</h1>
+
+<div class="panel">
+<button onclick="addPlayer()">➕ Người chơi</button>
+<button onclick="addRound()">🎯 Thêm vòng</button>
+<button onclick="saveData()">💾 Lưu</button>
+<button onclick="newGame()">🆕 Game mới</button>
+<button onclick="undoLast()">↩️ Undo</button>
+</div>
+
+<div class="panel">
+<h3>🔧 Sửa điểm nhanh</h3>
+Tên:
+<select id="editPlayer"></select>
+Vòng:
+<select id="editRound"></select>
+Điểm mới:
+<input type="number" id="editScore">
+<button onclick="applyEdit()">Cập nhật</button>
+</div>
+
+<table id="scoreTable">
+<thead><tr id="headerRow"><th>Người chơi</th><th>V1</th><th>Tổng</th></tr></thead>
+<tbody></tbody>
+</table>
+
+<h2>🏆 Bảng xếp hạng</h2>
+<table>
+<thead><tr><th>Hạng</th><th>Tên</th><th>Điểm</th></tr></thead>
+<tbody id="rankBody"></tbody>
+</table>
+
+<script>
+let rounds=1, players=[], history=[];
+
+function addPlayer(){
+ let name=prompt("Tên người chơi:");
+ if(!name) return;
+ players.push({name,scores:Array(rounds).fill(0)});
+ render();
+}
+
+function addRound(){
+ rounds++;
+ let th=document.createElement("th");
+ th.textContent="V"+rounds;
+ headerRow.insertBefore(th,headerRow.lastElementChild);
+ players.forEach(p=>p.scores.push(0));
+ render();
+}
+
+function updateScore(pi,ri,val){
+ history.push(JSON.stringify(players));
+ players[pi].scores[ri]=Number(val)||0;
+ renderRank();
+}
+
+function applyEdit(){
+ let p=document.getElementById('editPlayer').value;
+ let r=document.getElementById('editRound').value;
+ let s=document.getElementById('editScore').value;
+ if(p===""||r==="") return;
+ history.push(JSON.stringify(players));
+ players[p].scores[r]=Number(s)||0;
+ render();
+}
+
+function undoLast(){
+ if(history.length===0) return alert("Không có thao tác để hoàn tác");
+ players=JSON.parse(history.pop());
+ render();
+}
+
+function newGame(){
+ if(confirm("Xóa toàn bộ dữ liệu?")){
+   localStorage.removeItem("flip7_data");
+   players=[]; rounds=1; history=[];
+   headerRow.innerHTML="<th>Người chơi</th><th>V1</th><th>Tổng</th>";
+   render();
+ }
+}
+
+function render(){
+ let tbody=document.querySelector("#scoreTable tbody");
+ tbody.innerHTML="";
+ players.forEach((p,pi)=>{
+   let tr=document.createElement("tr");
+   tr.innerHTML="<td>"+p.name+"</td>";
+   p.scores.forEach((s,ri)=>{
+      tr.innerHTML+=`<td><button onclick="step(${pi},${ri},-1)">-</button>
+      <input type="number" value="${s}" onchange="updateScore(${pi},${ri},this.value)">
+      <button onclick="step(${pi},${ri},1)">+</button></td>`;
+   });
+   tr.innerHTML+="<td>"+p.scores.reduce((a,b)=>a+b,0)+"</td>";
+   tbody.appendChild(tr);
+ });
+ updateEditors();
+ renderRank();
+}
+
+function step(pi,ri,d){
+ history.push(JSON.stringify(players));
+ players[pi].scores[ri]+=d;
+ render();
+}
+
+function updateEditors(){
+ let p=document.getElementById("editPlayer");
+ let r=document.getElementById("editRound");
+ p.innerHTML=""; r.innerHTML="";
+ players.forEach((pl,i)=>p.innerHTML+=`<option value="${i}">${pl.name}</option>`);
+ for(let i=0;i<rounds;i++) r.innerHTML+=`<option value="${i}">V${i+1}</option>`;
+}
+
+function renderRank(){
+ let rank=[...players].map(p=>({
+   name:p.name,total:p.scores.reduce((a,b)=>a+b,0)
+ })).sort((a,b)=>b.total-a.total);
+
+ let body=document.getElementById("rankBody");
+ body.innerHTML="";
+ rank.forEach((r,i)=>{
+   let cls=i===0?"leader1":i===1?"leader2":i===2?"leader3":"";
+   body.innerHTML+=`<tr class="${cls}"><td>${i+1}</td><td>${r.name}</td><td>${r.total}</td></tr>`;
+ });
+}
+
+function saveData(){
+ localStorage.setItem("flip7_data",JSON.stringify({players,rounds}));
+ alert("Đã lưu");
+}
+
+(function(){
+ let data=localStorage.getItem("flip7_data");
+ if(data){
+   let d=JSON.parse(data);
+   players=d.players; rounds=d.rounds;
+   let h=document.getElementById("headerRow");
+   for(let i=2;i<=rounds;i++){
+      let th=document.createElement("th");
+      th.textContent="V"+i;
+      h.insertBefore(th,h.lastElementChild);
+   }
+ }
+ render();
+})();
+</script>
+</body>
+</html>
