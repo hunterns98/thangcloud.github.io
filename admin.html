@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flip 7 Scoreboard - Admin Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+
+    <div id="auth-gate" class="fixed inset-0 bg-gray-950 flex items-center justify-center z-50">
+        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700 max-w-sm w-full mx-4">
+            <h2 class="text-2xl font-bold text-yellow-500 mb-4 text-center">Admin Access</h2>
+            <p class="text-gray-400 text-sm mb-4 text-center">Vui lòng nhập mật khẩu quản trị viên để chỉnh sửa điểm.</p>
+            <input type="password" id="admin-password" placeholder="Nhập mã pin..." class="w-full p-3 bg-gray-900 border border-gray-600 rounded-lg text-center font-bold tracking-widest text-xl text-white mb-4 focus:outline-none focus:border-yellow-500">
+            <button id="btn-login" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 rounded-lg transition-colors shadow-lg">Xác nhận</button>
+            <p id="auth-error" class="text-red-500 text-sm mt-2 text-center hidden">Sai mã PIN rồi bạn ơi!</p>
+        </div>
+    </div>
+
+    <div id="admin-panel" class="container mx-auto px-4 py-6 max-w-4xl hidden">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-700 pb-4 mb-6 gap-4">
+            <div>
+                <h1 class="text-3xl font-black text-red-500 tracking-wide">ADMIN CONTROL PANEL</h1>
+                <p class="text-sm text-gray-400">Mọi thay đổi sẽ ngay lập tức đồng bộ đến các thiết bị Viewer.</p>
+            </div>
+            <div class="flex gap-2 w-full md:w-auto">
+                <button id="btn-undo" class="flex-1 md:flex-initial bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg shadow transition-all text-sm">↩️ Hoàn tác (Undo)</button>
+                <button id="btn-reset" class="flex-1 md:flex-initial bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-all text-sm">🗑️ Trận mới (Reset)</button>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 mb-6">
+            <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Thêm người chơi mới</h3>
+            <div class="flex gap-2">
+                <input type="text" id="new-player-name" placeholder="Tên người chơi..." class="flex-1 p-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500">
+                <button id="btn-add-player" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-5 rounded-lg transition-colors">Thêm</button>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-xl">
+            <div class="p-4 bg-gray-750 border-b border-gray-700 flex justify-between items-center">
+                <h3 class="font-bold text-gray-300">Quản lý Vòng đấu: Vòng <span id="current-round-text" class="text-yellow-400 text-xl">0</span></h3>
+                <button id="btn-add-round" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-1.5 px-4 rounded-md text-sm transition-all">+ Thêm Vòng mới</button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-700 text-gray-300 text-xs uppercase tracking-wider">
+                            <th class="py-3 px-4">Người chơi</th>
+                            <th class="py-3 px-4">Điểm các vòng trước</th>
+                            <th class="py-3 px-4 w-40 text-center" id="active-round-header">Nhập Vòng kế</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700" id="admin-table-body">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-4 bg-gray-750 text-right border-t border-gray-700">
+                <button id="btn-save" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-8 rounded-lg text-base shadow-lg transition-all w-full md:w-auto">💾 CẬP NHẬT ĐIỂM SỐ LÊN LIVE</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://esm.sh/firebase@10.8.0/app";
+        import { getFirestore, doc, getDoc, setDoc } from "https://esm.sh/firebase@10.8.0/firestore";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDUTKQK4mUKMBc-f8cnu-JAEhQ5XHZeg-E",
+            authDomain: "flip7live.firebaseapp.com",
+            projectId: "flip7live",
+            storageBucket: "flip7live.firebasestorage.app",
+            messagingSenderId: "803983803794",
+            appId: "1:803983803794:web:70bbe5349d3a63650ded4b",
+            measurementId: "G-RNQKM7R0S6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const docRef = doc(db, "games", "main");
+
+        let gameState = { rounds: 0, players: [] };
+        let historyStack = [];
+
+        const authGate = document.getElementById('auth-gate');
+        const adminPanel = document.getElementById('admin-panel');
+        const passwordInput = document.getElementById('admin-password');
+        const loginBtn = document.getElementById('btn-login');
+        const authError = document.getElementById('auth-error');
+
+        loginBtn.addEventListener('click', () => {
+            if (passwordInput.value === "2106") {
+                authGate.classList.add('hidden');
+                adminPanel.classList.remove('hidden');
+                loadCurrentGameData();
+            } else {
+                authError.classList.remove('hidden');
+            }
+        });
+
+        async function loadCurrentGameData() {
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    gameState = docSnap.data();
+                } else {
+                    gameState = { rounds: 1, players: [] };
+                    await setDoc(docRef, gameState);
+                }
+                renderAdminView();
+            } catch (error) {
+                alert("Lỗi tải dữ liệu Firestore: " + error.message);
+            }
+        }
+
+        function saveToHistory() {
+            historyStack.push(JSON.stringify(gameState));
+            if (historyStack.length > 10) historyStack.shift();
+        }
+
+        function renderAdminView() {
+            document.getElementById('current-round-text').innerText = gameState.rounds;
+            document.getElementById('active-round-header').innerText = `Điểm Vòng ${gameState.rounds}`;
+
+            const tbody = document.getElementById('admin-table-body');
+            let html = '';
+
+            gameState.players.forEach((player, pIndex) => {
+                const previousScoresHtml = player.scores.slice(0, gameState.rounds - 1)
+                    .map((s, idx) => `<span class="inline-block bg-gray-700 text-gray-300 px-2 py-0.5 rounded text-xs mr-1">V${idx+1}: ${s}</span>`)
+                    .join('') || '<span class="text-xs text-gray-500">Chưa có vòng trước</span>';
+
+                const currentRoundScore = player.scores[gameState.rounds - 1] !== undefined ? player.scores[gameState.rounds - 1] : '';
+
+                html += `
+                    <tr class="hover:bg-gray-750">
+                        <td class="py-4 px-4 font-bold text-yellow-400">${player.name}</td>
+                        <td class="py-4 px-4">${previousScoresHtml}</td>
+                        <td class="py-4 px-4">
+                            <input type="number" 
+                                   data-pindex="${pIndex}" 
+                                   value="${currentRoundScore}" 
+                                   placeholder="Nhập..." 
+                                   class="score-input w-full p-2 bg-gray-900 border border-gray-600 rounded text-center font-bold text-lg text-emerald-400 focus:outline-none focus:border-red-500">
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html || `<tr><td colspan="3" class="text-center py-8 text-gray-400">Chưa có người chơi. Vui lòng thêm ở khung phía trên!</td></tr>`;
+        }
+
+        document.getElementById('btn-add-player').addEventListener('click', () => {
+            const nameInput = document.getElementById('new-player-name');
+            const name = nameInput.value.trim();
+            if (!name) return;
+
+            saveToHistory();
+            const emptyScores = Array(gameState.rounds).fill(0);
+            gameState.players.push({ name: name, scores: emptyScores });
+            nameInput.value = '';
+            renderAdminView();
+        });
+
+        document.getElementById('btn-add-round').addEventListener('click', () => {
+            saveToHistory();
+            collectInputs();
+            gameState.rounds += 1;
+            gameState.players.forEach(p => {
+                if(p.scores.length < gameState.rounds) p.scores.push(0);
+            });
+            renderAdminView();
+        });
+
+        function collectInputs() {
+            const inputs = document.querySelectorAll('.score-input');
+            inputs.forEach(input => {
+                const pIndex = parseInt(input.getAttribute('data-pindex'));
+                const val = parseInt(input.value);
+                gameState.players[pIndex].scores[gameState.rounds - 1] = isNaN(val) ? 0 : val;
+            });
+        }
+
+        document.getElementById('btn-save').addEventListener('click', async () => {
+            collectInputs();
+            try {
+                await setDoc(docRef, gameState);
+                alert("🚀 Đã cập nhật live thành công!");
+            } catch (error) {
+                alert("Lỗi khi ghi dữ liệu: " + error.message);
+            }
+        });
+
+        document.getElementById('btn-undo').addEventListener('click', () => {
+            if (historyStack.length > 0) {
+                gameState = JSON.parse(historyStack.pop());
+                renderAdminView();
+            } else {
+                alert("Không còn thao tác nào để hoàn tác!");
+            }
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', async () => {
+            if (confirm("Bạn có chắc chắn muốn xóa toàn bộ trận đấu hiện tại để lập Game mới không?")) {
+                gameState = { rounds: 1, players: [] };
+                historyStack = [];
+                try {
+                    await setDoc(docRef, gameState);
+                    renderAdminView();
+                    alert("Đã reset trận mới thành công!");
+                } catch (error) {
+                    alert("Lỗi khi xóa trận: " + error.message);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
