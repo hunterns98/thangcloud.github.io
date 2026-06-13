@@ -65,8 +65,8 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://esm.sh/firebase@10.8.0/app";
-        import { getFirestore, doc, getDoc, setDoc } from "https://esm.sh/firebase@10.8.0/firestore";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDUTKQK4mUKMBc-f8cnu-JAEhQ5XHZeg-E",
@@ -78,6 +78,7 @@
             measurementId: "G-RNQKM7R0S6"
         };
 
+        // Khởi tạo app trước, sau đó khởi tạo db
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const docRef = doc(db, "games", "main");

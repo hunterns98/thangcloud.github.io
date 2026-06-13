@@ -57,8 +57,8 @@
 
     <!-- Firebase Realtime Logic -->
     <script type="module">
-        import { initializeApp } from "https://esm.sh/firebase@10.8.0/app";
-        import { getFirestore, doc, onSnapshot } from "https://esm.sh/firebase@10.8.0/firestore";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDUTKQK4mUKMBc-f8cnu-JAEhQ5XHZeg-E",
@@ -70,6 +70,7 @@
             measurementId: "G-RNQKM7R0S6"
         };
 
+        // Khởi tạo app trước, sau đó khởi tạo db
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
@@ -80,6 +81,9 @@
             } else {
                 document.getElementById('table-body').innerHTML = `<tr><td colspan="3" class="text-center py-8 text-red-400">Chưa có dữ liệu trận đấu. Vui lòng khởi tạo từ trang Admin.</td></tr>`;
             }
+        }, (error) => {
+            console.error("Lỗi Firestore Realtime:", error);
+            document.getElementById('table-body').innerHTML = `<tr><td colspan="3" class="text-center py-8 text-red-400">Lỗi kết nối: ${error.message}</td></tr>`;
         });
 
         function renderScoreboard(data) {
