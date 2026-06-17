@@ -70,7 +70,42 @@ body{
 #podium > div:nth-child(2){
 
     animation:
-    championGlow 2s infinite;
+    championGlow 2s infinite,
+    floatUp 3s ease-in-out infinite;
+
+    transform:scale(1.08);
+
+    z-index:2;
+
+}
+
+
+
+@keyframes championGlow{
+
+    50%{
+
+        box-shadow:
+
+        0 0 45px rgba(255,215,0,0.9);
+
+    }
+
+}
+
+
+
+@keyframes floatUp{
+
+    50%{
+
+        transform:
+
+        scale(1.08)
+
+        translateY(-8px);
+
+    }
 
 }
 
@@ -313,7 +348,9 @@ url('assets/background.jpg');
                     <span class="text-xl font-extrabold text-gray-300">${p2 ? p2.total : 0}</span>
                 </div>
                 <div class="flex flex-col justify-end items-center p-3 bg-gray-800 rounded-lg border-t-4 border-yellow-500 transform scale-105 shadow-2xl">
-                    <span class="text-xs text-yellow-500">👑 Hạng 1</span>
+                    <span class="text-sm text-yellow-400 font-black">
+🏆 LEADER
+</span>
                     <span class="font-bold text-base text-yellow-400 truncate w-full">${p1 ? p1.name : '-'}</span>
                     <span class="text-2xl font-black text-yellow-400">${p1 ? p1.total : 0}</span>
                 </div>
