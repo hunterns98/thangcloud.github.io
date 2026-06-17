@@ -3,120 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flip 7 Live Scoreboard - Viewer</title>
+    <title>Flip 7 Live Scoreboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
+        body { font-family: Arial, sans-serif; }
 
-        /* ===== Hiệu ứng chung ===== */
-        #app-container {
-            animation: fadeIn 0.8s ease;
-        }
+        /* ===== Fade in ===== */
+        #app-container { animation: fadeIn 0.8s ease; }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to   { opacity: 1; transform: translateY(0); }
+            from { opacity:0; transform:translateY(20px); }
+            to   { opacity:1; transform:translateY(0); }
         }
 
-        .gold   { background: linear-gradient(135deg,#ffd700,#ff9900); color:#000; font-weight:bold; }
-        .silver { background: linear-gradient(135deg,#eeeeee,#999);    color:#000; font-weight:bold; }
-        .bronze { background: linear-gradient(135deg,#cd7f32,#8b4513); color:white; font-weight:bold; }
+        /* ===== Rank badges ===== */
+        .gold   { background:linear-gradient(135deg,#ffd700,#ff9900); color:#000; font-weight:bold; }
+        .silver { background:linear-gradient(135deg,#eee,#999);       color:#000; font-weight:bold; }
+        .bronze { background:linear-gradient(135deg,#cd7f32,#8b4513); color:#fff; font-weight:bold; }
 
+        /* ===== Podium cards ===== */
         #podium > div {
             background: rgba(31,41,55,0.75);
             backdrop-filter: blur(8px);
             border-radius: 18px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        /* Top 1 - glow + float */
+        /* Top-1 card — glow + float */
         #podium > div:nth-child(2) {
             animation: championGlow 2s infinite, floatUp 3s ease-in-out infinite;
             transform: scale(1.08);
             z-index: 2;
         }
         @keyframes championGlow {
-            50% { box-shadow: 0 0 45px rgba(255,215,0,0.9); }
+            50% { box-shadow: 0 0 55px rgba(255,215,0,0.95); }
         }
         @keyframes floatUp {
             50% { transform: scale(1.08) translateY(-8px); }
         }
 
-        .bg-gray-800 {
-            background: rgba(31,41,55,0.78) !important;
+        /* ===== Crown pulse on top-1 ===== */
+        .crown-pulse {
+            display: inline-block;
+            font-size: 2.8rem;
+            animation: crownBounce 1.6s ease-in-out infinite;
+        }
+        @keyframes crownBounce {
+            0%,100% { transform: translateY(0) scale(1); }
+            50%      { transform: translateY(-6px) scale(1.15); }
+        }
+
+        /* ===== Table ===== */
+        .bg-gray-800 { background:rgba(31,41,55,0.78) !important; backdrop-filter:blur(10px); }
+        tbody tr { transition:.25s; }
+        tbody tr:hover { background:rgba(255,255,255,0.1); }
+
+        /* ===== Score-change flash on row ===== */
+        @keyframes scoreFlash {
+            0%   { background:rgba(16,185,129,0.45); }
+            100% { background:transparent; }
+        }
+        .score-changed { animation: scoreFlash 1.8s ease forwards; }
+
+        /* ===== Toast notification ===== */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .toast {
+            background: linear-gradient(135deg,rgba(16,185,129,0.92),rgba(5,150,105,0.92));
             backdrop-filter: blur(10px);
+            border: 1px solid rgba(52,211,153,0.5);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+            animation: toastIn 0.35s cubic-bezier(.34,1.56,.64,1) forwards;
         }
-        tbody tr {
-            transition: 0.25s;
+        .toast.hide { animation: toastOut 0.4s ease forwards; }
+        @keyframes toastIn  { from{opacity:0;transform:translateX(60px)} to{opacity:1;transform:translateX(0)} }
+        @keyframes toastOut { from{opacity:1;transform:translateX(0)} to{opacity:0;transform:translateX(60px)} }
+
+        /* ===== Round badge ===== */
+        #round-badge {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(99,102,241,0.22);
+            border: 2px solid rgba(129,140,248,0.55);
+            border-radius: 16px;
+            padding: 8px 28px;
+            margin-top: 10px;
         }
-        tbody tr:hover {
+        #round-badge .round-num {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #a5b4fc;
+            letter-spacing: .12em;
+            line-height: 1;
+        }
+        #round-badge .round-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #f87171;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+        }
+
+        /* ===== Progress bar ===== */
+        #progress-wrap {
+            background: rgba(31,41,55,0.7);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            padding: 14px 20px;
+            margin-bottom: 18px;
+        }
+        #progress-bar-bg {
             background: rgba(255,255,255,0.1);
+            border-radius: 99px;
+            height: 18px;
+            overflow: hidden;
+            position: relative;
         }
+        #progress-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            background: linear-gradient(90deg,#6366f1,#f59e0b,#ef4444);
+            transition: width 0.8s cubic-bezier(.34,1.2,.64,1);
+            position: relative;
+        }
+        #progress-bar-fill::after {
+            content:'';
+            position:absolute; top:0; left:0; right:0; bottom:0;
+            background: linear-gradient(90deg,transparent 60%,rgba(255,255,255,0.25));
+            border-radius: 99px;
+        }
+        #progress-winner-banner {
+            display:none;
+            margin-top:10px;
+            text-align:center;
+            font-size:1.1rem;
+            font-weight:900;
+            color:#fbbf24;
+            text-shadow: 0 0 18px rgba(251,191,36,0.7);
+            animation: winnerGlow 1.2s ease-in-out infinite alternate;
+        }
+        @keyframes winnerGlow { to { text-shadow: 0 0 36px rgba(251,191,36,1); } }
 
         /* ===== TV Mode ===== */
-        .tv-mode            { font-size: 1.7rem; }
-        .tv-mode h1         { font-size: 4rem; }
-        .tv-mode table      { font-size: 2rem; }
+        .tv-mode            { font-size:1.7rem; }
+        .tv-mode h1         { font-size:4rem; }
+        .tv-mode table      { font-size:2rem; }
         .tv-mode th,
-        .tv-mode td         { padding: 1.8rem 1.2rem; }
+        .tv-mode td         { padding:1.8rem 1.2rem; }
 
-        /* ===== Chữ ký góc trái dưới ===== */
+        /* ===== Signature ===== */
         #signature {
-            position: fixed;
-            bottom: 18px;
-            left: 18px;
-            z-index: 999;
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: #ffffff;
-            letter-spacing: 0.03em;
-            pointer-events: none;
-            text-shadow: 0 1px 6px rgba(0,0,0,0.7);
-            user-select: none;
+            position:fixed; bottom:18px; left:18px; z-index:999;
+            font-size:0.82rem; font-weight:600; color:#fff;
+            letter-spacing:.03em; pointer-events:none;
+            text-shadow:0 1px 6px rgba(0,0,0,0.7); user-select:none;
         }
-        #signature .heart {
-            color: #ff3b3b;
-            display: inline-block;
-            animation: heartbeat 1.4s ease-in-out infinite;
-        }
+        #signature .heart { color:#ff3b3b; display:inline-block; animation:heartbeat 1.4s ease-in-out infinite; }
         @keyframes heartbeat {
-            0%   { transform: scale(1);    }
-            14%  { transform: scale(1.30); }
-            28%  { transform: scale(1);    }
-            42%  { transform: scale(1.20); }
-            56%  { transform: scale(1);    }
-            100% { transform: scale(1);    }
+            0%  { transform:scale(1);    }
+            14% { transform:scale(1.30); }
+            28% { transform:scale(1);    }
+            42% { transform:scale(1.20); }
+            56% { transform:scale(1);    }
         }
     </style>
 </head>
-<body
-    class="text-gray-100 min-h-screen bg-cover bg-center bg-fixed"
-    style="background-image: linear-gradient(rgba(0,0,0,0.65),rgba(0,0,0,0.65)), url('assets/background.jpg');">
+<body class="text-gray-100 min-h-screen bg-cover bg-center bg-fixed"
+      style="background-image:linear-gradient(rgba(0,0,0,0.65),rgba(0,0,0,0.65)),url('assets/background.jpg');">
 
-    <!-- Chữ ký -->
+    <!-- Toast container -->
+    <div id="toast-container"></div>
+
+    <!-- Signature -->
     <div id="signature">Made from Thắng with <span class="heart">♥</span></div>
 
     <div id="app-container" class="container mx-auto px-4 py-6 max-w-4xl">
 
-        <!-- Header -->
-        <div class="flex flex-col items-center mb-8 text-center">
+        <!-- ===== HEADER ===== -->
+        <div class="flex flex-col items-center mb-6 text-center">
             <img src="assets/logo.png" class="w-32 md:w-48 mb-4 drop-shadow-2xl">
-            <h1 class="text-3xl md:text-6xl font-black text-yellow-400 tracking-widest">
-                🎲 FLIP 7 LIVE
-            </h1>
-            <p class="text-sm md:text-lg text-gray-300 mt-2">🃏 Realtime Scoreboard • Game Night</p>
+            <h1 class="text-3xl md:text-6xl font-black text-yellow-400 tracking-widest">🎲 FLIP 7 LIVE</h1>
+
+            <!-- Round badge -->
+            <div id="round-badge">
+                <span class="round-num" id="round-num-text">—</span>
+                <span class="round-label">🔥 ĐANG CHƠI</span>
+            </div>
+
             <button id="btn-tv"
                 class="mt-5 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all">
                 📺 TV Mode
             </button>
         </div>
 
-        <!-- Bảng Xếp Hạng Top 3 -->
-        <div id="podium" class="grid grid-cols-3 gap-3 mb-8 text-center">
-            <!-- render by JS -->
+        <!-- ===== PROGRESS BAR ===== -->
+        <div id="progress-wrap">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">ROUND PROGRESS</span>
+                <span class="text-xs font-bold text-indigo-300" id="progress-label">0 / 200</span>
+            </div>
+            <div id="progress-bar-bg">
+                <div id="progress-bar-fill" style="width:0%"></div>
+            </div>
+            <div id="progress-winner-banner"></div>
         </div>
 
-        <!-- Bảng Điểm Chi Tiết -->
+        <!-- ===== PODIUM ===== -->
+        <div id="podium" class="grid grid-cols-3 gap-3 mb-8 text-center"></div>
+
+        <!-- ===== SCORE TABLE ===== -->
         <div class="bg-gray-800 rounded-xl shadow-xl overflow-hidden border border-gray-700">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse" id="score-table">
@@ -128,19 +235,16 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-700 text-sm md:text-base" id="table-body">
-                        <tr>
-                            <td colspan="3" class="text-center py-8 text-gray-400">Đang kết nối Firestore...</td>
-                        </tr>
+                        <tr><td colspan="3" class="text-center py-8 text-gray-400">Đang kết nối Firestore...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
+    </div>
 
-    </div><!-- /app-container -->
-
-    <!-- Firebase Realtime Logic -->
+    <!-- ===== FIREBASE + LOGIC ===== -->
     <script type="module">
-        import { initializeApp }        from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { initializeApp }          from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -156,95 +260,188 @@
         const app = initializeApp(firebaseConfig);
         const db  = getFirestore(app);
 
+        // ── Avatar pool (animal emojis) ──────────────────────────────────────
+        const AVATARS = ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯',
+                         '🦁','🐮','🐷','🐸','🐙','🦋','🐧','🐦','🦆','🦉'];
+        const avatarMap = {};
+        function getAvatar(name) {
+            if (!avatarMap[name]) {
+                // deterministic: sum char codes mod pool length
+                const idx = [...name].reduce((s,c)=>s+c.charCodeAt(0),0) % AVATARS.length;
+                avatarMap[name] = AVATARS[idx];
+            }
+            return avatarMap[name];
+        }
+
+        // ── Previous totals for change detection ────────────────────────────
+        let prevTotals = {};   // { playerName: total }
+        let prevLeader = null;
+        let firstLoad  = true;
+
+        // ── Toast helper ─────────────────────────────────────────────────────
+        function showToast(msg) {
+            const container = document.getElementById('toast-container');
+            const el = document.createElement('div');
+            el.className = 'toast';
+            el.innerHTML = msg;
+            container.appendChild(el);
+            setTimeout(() => {
+                el.classList.add('hide');
+                el.addEventListener('animationend', () => el.remove());
+            }, 2200);
+        }
+
+        // ── Firestore listener ───────────────────────────────────────────────
         onSnapshot(doc(db, "games", "main"), (docSnap) => {
             if (docSnap.exists()) {
                 renderScoreboard(docSnap.data());
             } else {
                 document.getElementById('table-body').innerHTML =
-                    `<tr><td colspan="3" class="text-center py-8 text-red-400">Chưa có dữ liệu trận đấu. Vui lòng khởi tạo từ trang Admin.</td></tr>`;
+                    `<tr><td colspan="3" class="text-center py-8 text-red-400">Chưa có dữ liệu. Khởi tạo từ trang Admin.</td></tr>`;
             }
-        }, (error) => {
-            console.error("Lỗi Firestore Realtime:", error);
+        }, (err) => {
             document.getElementById('table-body').innerHTML =
-                `<tr><td colspan="3" class="text-center py-8 text-red-400">Lỗi kết nối: ${error.message}</td></tr>`;
+                `<tr><td colspan="3" class="text-center py-8 text-red-400">Lỗi kết nối: ${err.message}</td></tr>`;
         });
 
+        // ── Main render ──────────────────────────────────────────────────────
         function renderScoreboard(data) {
             const totalRounds = data.rounds  || 0;
             const players     = data.players || [];
 
-            const processedPlayers = players
-                .map(p => ({ ...p, total: p.scores.reduce((s, v) => s + (v || 0), 0) }))
-                .sort((a, b) => b.total - a.total);
+            const sorted = players
+                .map(p => ({ ...p, total: p.scores.reduce((s,v)=>s+(v||0),0) }))
+                .sort((a,b)=>b.total-a.total);
 
-            renderPodium(processedPlayers);
+            // Round badge
+            document.getElementById('round-num-text').textContent = `ROUND ${totalRounds}`;
 
+            // Progress bar (goal = 200)
+            const GOAL = 200;
+            const topScore = sorted[0]?.total || 0;
+            const pct = Math.min(100, Math.round(topScore / GOAL * 100));
+            document.getElementById('progress-bar-fill').style.width = pct + '%';
+            document.getElementById('progress-label').textContent = `${topScore} / ${GOAL}`;
+
+            // Winner banner
+            const winnerBanner = document.getElementById('progress-winner-banner');
+            const winners = sorted.filter(p => p.total >= GOAL && p.total === sorted[0].total);
+            if (winners.length > 0) {
+                const names = winners.map(p=>`${getAvatar(p.name)} ${p.name}`).join('  &  ');
+                winnerBanner.style.display = 'block';
+                winnerBanner.innerHTML = winners.length > 1
+                    ? `🏆 ĐỒNG GIẢI NHẤT: ${names} 🏆`
+                    : `🏆 NGƯỜI CHIẾN THẮNG: ${names} 🏆`;
+            } else {
+                winnerBanner.style.display = 'none';
+            }
+
+            // Change detection (skip first load)
+            const changedRows = new Set();
+            if (!firstLoad) {
+                sorted.forEach(p => {
+                    const prev = prevTotals[p.name];
+                    if (prev !== undefined && p.total !== prev) {
+                        const diff = p.total - prev;
+                        const sign = diff > 0 ? `+${diff}` : `${diff}`;
+                        showToast(`${getAvatar(p.name)} <strong>${p.name}</strong> ${diff>0?'tăng':'giảm'} điểm! ${sign} → <span style="color:#fbbf24">${p.total}</span>`);
+                        changedRows.add(p.name);
+                    }
+                });
+                // New leader?
+                const newLeader = sorted[0]?.name;
+                if (prevLeader && newLeader !== prevLeader) {
+                    setTimeout(() => showToast(`👑 <strong>${newLeader}</strong> vươn lên DẪN ĐẦU!`), 400);
+                }
+            }
+            firstLoad = false;
+
+            // Save state for next comparison
+            sorted.forEach(p => { prevTotals[p.name] = p.total; });
+            prevLeader = sorted[0]?.name || null;
+
+            renderPodium(sorted);
+            renderTable(sorted, totalRounds, changedRows);
+        }
+
+        // ── Podium ───────────────────────────────────────────────────────────
+        function renderPodium(sorted) {
+            const div = document.getElementById('podium');
+            if (!sorted.length) { div.innerHTML=''; return; }
+            const [p1,p2,p3] = sorted;
+
+            div.innerHTML = `
+              <!-- #2 -->
+              <div class="flex flex-col justify-end items-center p-3 rounded-lg border-t-4 border-gray-400 mt-6">
+                <span class="text-2xl mb-1">${p2 ? getAvatar(p2.name) : ''}</span>
+                <span class="text-xs text-gray-400 font-bold">#2</span>
+                <span class="font-bold text-sm text-gray-200 truncate w-full text-center mt-1">${p2?p2.name:'-'}</span>
+                <span class="text-xl font-extrabold text-gray-300">${p2?p2.total:0}</span>
+              </div>
+
+              <!-- #1 — crown card -->
+              <div class="flex flex-col justify-end items-center p-3 rounded-lg border-t-4 border-yellow-400 shadow-2xl">
+                <span class="crown-pulse">👑</span>
+                <span class="text-2xl mb-1">${p1 ? getAvatar(p1.name) : ''}</span>
+                <span class="font-black text-base text-yellow-300 truncate w-full text-center mt-1">${p1?p1.name:'-'}</span>
+                <span class="text-3xl font-black text-yellow-400">${p1?p1.total:0}</span>
+                <span class="text-xs font-black text-red-400 mt-1 tracking-widest">🔥 ĐANG DẪN ĐẦU</span>
+              </div>
+
+              <!-- #3 -->
+              <div class="flex flex-col justify-end items-center p-3 rounded-lg border-t-4 border-amber-700 mt-10">
+                <span class="text-2xl mb-1">${p3 ? getAvatar(p3.name) : ''}</span>
+                <span class="text-xs text-gray-400 font-bold">#3</span>
+                <span class="font-bold text-sm text-gray-200 truncate w-full text-center mt-1">${p3?p3.name:'-'}</span>
+                <span class="text-xl font-extrabold text-amber-600">${p3?p3.total:0}</span>
+              </div>
+            `;
+        }
+
+        // ── Score table ───────────────────────────────────────────────────────
+        function renderTable(sorted, totalRounds, changedRows) {
             // Header
-            const headerRow = document.getElementById('table-header');
-            let headerHtml = `<th class="py-3 px-4 w-16">Hạng</th><th class="py-3 px-4">Người chơi</th>`;
-            for (let i = 1; i <= totalRounds; i++) headerHtml += `<th class="py-3 px-2 text-center">V${i}</th>`;
-            headerHtml += `<th class="py-3 px-4 text-right w-24">Tổng</th>`;
-            headerRow.innerHTML = headerHtml;
+            const header = document.getElementById('table-header');
+            let hHtml = `<th class="py-3 px-2 w-10 text-center">Hạng</th>
+                         <th class="py-3 px-3">Người chơi</th>`;
+            for (let i=1;i<=totalRounds;i++) hHtml += `<th class="py-3 px-2 text-center">V${i}</th>`;
+            hHtml += `<th class="py-3 px-4 text-right w-20">Tổng</th>`;
+            header.innerHTML = hHtml;
 
             // Body
             const tbody = document.getElementById('table-body');
-            let bodyHtml = '';
-            processedPlayers.forEach((player, index) => {
-                let rankClass = '';
-                if (index === 0) rankClass = 'gold';
-                else if (index === 1) rankClass = 'silver';
-                else if (index === 2) rankClass = 'bronze';
-
-                bodyHtml += `
-                    <tr class="hover:bg-gray-750 transition-colors">
-                        <td class="py-3 px-4 font-bold text-center">
-                            <span class="inline-flex w-6 h-6 rounded-full items-center justify-center ${rankClass}">${index + 1}</span>
-                        </td>
-                        <td class="py-3 px-4 font-semibold text-yellow-400">${player.name}</td>`;
-                for (let i = 0; i < totalRounds; i++) {
-                    const score = player.scores[i] !== undefined ? player.scores[i] : '-';
-                    bodyHtml += `<td class="py-3 px-2 text-center text-gray-300">${score}</td>`;
+            let bHtml = '';
+            sorted.forEach((p, idx) => {
+                const rankClass = idx===0?'gold':idx===1?'silver':idx===2?'bronze':'';
+                const flashClass = changedRows.has(p.name) ? 'score-changed' : '';
+                bHtml += `
+                  <tr class="transition-colors ${flashClass}">
+                    <td class="py-3 px-2 text-center">
+                      <span class="inline-flex w-6 h-6 rounded-full items-center justify-center text-xs ${rankClass}">${idx+1}</span>
+                    </td>
+                    <td class="py-3 px-3 font-semibold text-yellow-300">
+                      <span class="mr-1">${getAvatar(p.name)}</span>${p.name}
+                    </td>`;
+                for (let i=0;i<totalRounds;i++) {
+                    const s = p.scores[i]!==undefined ? p.scores[i] : '-';
+                    bHtml += `<td class="py-3 px-2 text-center text-gray-300">${s}</td>`;
                 }
-                bodyHtml += `
-                        <td class="py-3 px-4 text-right font-bold text-emerald-400 text-lg">${player.total}</td>
-                    </tr>`;
+                bHtml += `<td class="py-3 px-4 text-right font-black text-emerald-400 text-lg">${p.total}</td></tr>`;
             });
-            tbody.innerHTML = bodyHtml ||
-                `<tr><td colspan="3" class="text-center py-8 text-gray-400">Chưa có người chơi nào.</td></tr>`;
+            tbody.innerHTML = bHtml ||
+                `<tr><td colspan="3" class="text-center py-8 text-gray-400">Chưa có người chơi.</td></tr>`;
         }
 
-        function renderPodium(sorted) {
-            const podiumDiv = document.getElementById('podium');
-            if (sorted.length === 0) { podiumDiv.innerHTML = ''; return; }
-            const [p1, p2, p3] = sorted;
-            podiumDiv.innerHTML = `
-                <div class="flex flex-col justify-end items-center p-2 bg-gray-800 rounded-lg border-t-4 border-gray-400 mt-4">
-                    <span class="text-xs text-gray-400">#2</span>
-                    <span class="font-bold text-sm text-gray-200 truncate w-full text-center">${p2 ? p2.name : '-'}</span>
-                    <span class="text-xl font-extrabold text-gray-300">${p2 ? p2.total : 0}</span>
-                </div>
-                <div class="flex flex-col justify-end items-center p-3 bg-gray-800 rounded-lg border-t-4 border-yellow-500 transform scale-105 shadow-2xl">
-                    <span class="text-sm text-yellow-400 font-black">🏆 LEADER</span>
-                    <span class="font-bold text-base text-yellow-400 truncate w-full text-center">${p1 ? p1.name : '-'}</span>
-                    <span class="text-2xl font-black text-yellow-400">${p1 ? p1.total : 0}</span>
-                </div>
-                <div class="flex flex-col justify-end items-center p-2 bg-gray-800 rounded-lg border-t-4 border-amber-700 mt-6">
-                    <span class="text-xs text-gray-400">#3</span>
-                    <span class="font-bold text-sm text-gray-200 truncate w-full text-center">${p3 ? p3.name : '-'}</span>
-                    <span class="text-xl font-extrabold text-amber-600">${p3 ? p3.total : 0}</span>
-                </div>`;
-        }
-
-        // TV Mode toggle
-        const btnTv    = document.getElementById('btn-tv');
+        // ── TV Mode ───────────────────────────────────────────────────────────
+        const btnTv     = document.getElementById('btn-tv');
         const container = document.getElementById('app-container');
         btnTv.addEventListener('click', () => {
             container.classList.toggle('tv-mode');
             if (container.classList.contains('tv-mode')) {
-                btnTv.innerText = "📱 Normal Mode";
+                btnTv.textContent = "📱 Normal Mode";
                 btnTv.classList.replace('bg-blue-600','bg-purple-600');
             } else {
-                btnTv.innerText = "📺 TV Mode";
+                btnTv.textContent = "📺 TV Mode";
                 btnTv.classList.replace('bg-purple-600','bg-blue-600');
             }
         });
