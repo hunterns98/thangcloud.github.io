@@ -6,13 +6,142 @@
     <title>Flip 7 Live Scoreboard - Viewer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .gold { background: linear-gradient(135deg, #ffd700, #ffa500); color: #000; font-weight: bold; }
-        .silver { background: linear-gradient(135deg, #c0c0c0, #a9a9a9); color: #000; font-weight: bold; }
-        .bronze { background: linear-gradient(135deg, #cd7f32, #b87333); color: #fff; font-weight: bold; }
-        .tv-mode { font-size: 1.5rem; }
-        .tv-mode h1 { font-size: 3.5rem; }
-        .tv-mode table { font-size: 1.8rem; }
-        .tv-mode th, .tv-mode td { padding: 1.5rem 1rem; }
+<style>
+
+body{
+    font-family: Arial, sans-serif;
+}
+
+
+/* ===== Hiệu ứng chung ===== */
+
+#app-container{
+    animation: fadeIn 0.8s ease;
+}
+
+
+@keyframes fadeIn{
+    from{
+        opacity:0;
+        transform:translateY(20px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+
+.gold {
+    background: linear-gradient(135deg,#ffd700,#ff9900);
+    color:#000;
+    font-weight:bold;
+}
+
+.silver {
+    background: linear-gradient(135deg,#eeeeee,#999);
+    color:#000;
+    font-weight:bold;
+}
+
+.bronze {
+    background: linear-gradient(135deg,#cd7f32,#8b4513);
+    color:white;
+    font-weight:bold;
+}
+
+
+#podium > div{
+
+    background:
+    rgba(31,41,55,0.75);
+
+    backdrop-filter:blur(8px);
+
+    border-radius:18px;
+
+    box-shadow:
+    0 10px 30px rgba(0,0,0,0.5);
+
+}
+
+
+#podium > div:nth-child(2){
+
+    animation:
+    championGlow 2s infinite;
+
+}
+
+
+@keyframes championGlow{
+
+    50%{
+        box-shadow:
+        0 0 35px rgba(255,215,0,0.8);
+    }
+
+}
+
+
+.bg-gray-800{
+
+    background:
+    rgba(31,41,55,0.78)
+    !important;
+
+    backdrop-filter:
+    blur(10px);
+
+}
+
+
+tbody tr{
+
+    transition:0.25s;
+
+}
+
+
+tbody tr:hover{
+
+    background:
+    rgba(255,255,255,0.1);
+
+}
+
+
+.tv-mode{
+
+    font-size:1.7rem;
+
+}
+
+
+.tv-mode h1{
+
+    font-size:4rem;
+
+}
+
+
+.tv-mode table{
+
+    font-size:2rem;
+
+}
+
+
+.tv-mode th,
+.tv-mode td{
+
+    padding:
+    1.8rem 1.2rem;
+
+}
+
+</style>
     </style>
 </head>
 <body 
@@ -30,7 +159,9 @@ url('assets/background.jpg');
         <!-- Header -->
         <div class="flex justify-between items-center mb-6">
             <div>
-                <h1 class="text-2xl md:text-4xl font-extrabold text-yellow-500 tracking-wider">FLIP 7 LIVE</h1>
+                <h1 class="text-2xl md:text-5xl font-black text-yellow-400 tracking-widest">
+🎲 FLIP 7 LIVE
+</h1>
                 <p class="text-xs md:text-sm text-gray-400 mt-1">Chế độ xem Realtime • Cập nhật tự động</p>
             </div>
             <button id="btn-tv" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg shadow text-sm transition-all">
