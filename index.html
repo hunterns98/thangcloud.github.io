@@ -181,12 +181,42 @@
             font-size:.82rem; font-weight:600; color:#fff;
             letter-spacing:.03em; pointer-events:none;
             text-shadow:0 1px 6px rgba(0,0,0,.7); user-select:none;
+            display:flex; align-items:center; gap:3px;
         }
-        #signature .heart { color:#ff3b3b; display:inline-block; animation:heartbeat 1.4s ease-in-out infinite; }
+        #signature .heart {
+            color:#ff3b3b; display:inline-block;
+            animation:heartbeat 1.4s ease-in-out infinite;
+        }
+        #signature .heart:nth-child(1) { animation-delay:0s; }
+        #signature .heart:nth-child(2) { animation-delay:.18s; font-size:.95em; }
+        #signature .heart:nth-child(3) { animation-delay:.36s; font-size:.8em; }
         @keyframes heartbeat {
-            0%  { transform:scale(1); }  14% { transform:scale(1.30); }
+            0%  { transform:scale(1); }  14% { transform:scale(1.35); }
             28% { transform:scale(1); }  42% { transform:scale(1.20); }
             56% { transform:scale(1); }
+        }
+
+        /* ===== Commentator box ===== */
+        #commentator {
+            position:fixed; bottom:18px; right:18px; z-index:999;
+            max-width:240px; pointer-events:none;
+        }
+        #commentator-bubble {
+            background:rgba(17,24,39,.82); backdrop-filter:blur(10px);
+            border:1px solid rgba(255,255,255,.12); border-radius:14px;
+            padding:10px 14px; font-size:.8rem; font-weight:600; color:#e5e7eb;
+            line-height:1.45; box-shadow:0 6px 24px rgba(0,0,0,.5);
+            animation:bubbleIn .4s cubic-bezier(.34,1.4,.64,1);
+            text-shadow:none;
+        }
+        #commentator-bubble.hide {
+            animation:bubbleOut .35s ease forwards;
+        }
+        @keyframes bubbleIn  { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes bubbleOut { from{opacity:1;transform:translateY(0)}    to{opacity:0;transform:translateY(10px)} }
+        #commentator-tag {
+            font-size:.65rem; color:#6b7280; margin-bottom:4px;
+            letter-spacing:.1em; text-transform:uppercase;
         }
     </style>
 </head>
@@ -197,7 +227,15 @@
     <div id="toast-container"></div>
 
     <!-- Signature -->
-    <div id="signature">Made from Thắng with <span class="heart">♥</span></div>
+    <div id="signature">Made from Thắng with <span class="heart">♥</span><span class="heart">♥</span><span class="heart">♥</span></div>
+
+    <!-- Commentator -->
+    <div id="commentator">
+        <div id="commentator-bubble" style="display:none;">
+            <div id="commentator-tag">💬 BTV bình luận</div>
+            <div id="commentator-text"></div>
+        </div>
+    </div>
 
     <!-- ===== WINNER SCREEN ===== -->
     <div id="winner-screen">
@@ -605,6 +643,50 @@
             document.getElementById('winner-screen').classList.remove('show');
             if(confettiInterval){ clearInterval(confettiInterval); confettiInterval=null; }
         });
+
+        // ── Auto Commentator ──────────────────────────────────────────────────
+        const COMMENTS=[
+            "🔥 Đầu 3 tổng 9. VAR rồi VAR rồi.",
+            "🎲 Em ăn cơm chưa? Mà sao yếu thế.",
+            "👀 Hợp đồng kỳ nghỉ không em?",
+            "🚨 Bảng điểm vừa rung chuyển nhẹ.",
+            "😂 Người phía dưới vẫn còn niềm tin mãnh liệt.",
+            "🏆 Top 1 đang ngồi ghế nóng.",
+            "⚡ Một cú lật điểm không báo trước.",
+            "🎭 Lửa hận thù đốt cháy ký ức hai ta.",
+            "🃏 Có vẻ bộ bài đang thiên vị ai đó.",
+            "🤤 Doki Doki, Fuwa Fuwa, Oishikunare, Moe Moe Kun.",
+            "😎 Bình tĩnh, đây mới chỉ là khởi động.",
+            "📈 Biểu đồ cảm xúc đang đi lên xuống như tàu lượn.",
+            "🤔 Ủa em?",
+            "😂 Người cuối bảng đang âm thầm luyện công.",
+            "👑 Vương miện hiện tại vẫn chưa chắc chắn.",
+            "🎲 Sống Nay Stress Mai.",
+            "🔥 Khán giả đang rất quan tâm diễn biến này.",
+            "😱 Khoảng cách điểm số đang thu nhỏ.",
+            "🏃 Cuộc đua chưa kết thúc.",
+            "🎉 Trust me I'm a Dogtor."
+        ];
+        let lastCommentIdx=-1;
+        function showComment(){
+            const bubble=document.getElementById('commentator-bubble');
+            const text=document.getElementById('commentator-text');
+            // pick a random comment, avoid repeating last one
+            let idx;
+            do { idx=Math.floor(Math.random()*COMMENTS.length); } while(idx===lastCommentIdx);
+            lastCommentIdx=idx;
+            text.textContent=COMMENTS[idx];
+            bubble.style.display='block';
+            bubble.classList.remove('hide');
+            // hide after 7s
+            clearTimeout(bubble._hideTimer);
+            bubble._hideTimer=setTimeout(()=>{
+                bubble.classList.add('hide');
+                bubble.addEventListener('animationend',()=>{ bubble.style.display='none'; bubble.classList.remove('hide'); },{once:true});
+            },7000);
+        }
+        // Show every 10s, first one after 5s
+        setTimeout(()=>{ showComment(); setInterval(showComment,10000); },5000);
 
         // ── TV Mode ───────────────────────────────────────────────────────────
         const btnTv=document.getElementById('btn-tv');
