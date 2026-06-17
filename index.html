@@ -5,156 +5,125 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flip 7 Live Scoreboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; }
 
-        /* ===== Fade in ===== */
+        /* Fade in */
         #app-container { animation: fadeIn 0.8s ease; }
         @keyframes fadeIn {
             from { opacity:0; transform:translateY(20px); }
             to   { opacity:1; transform:translateY(0); }
         }
 
-        /* ===== Rank badges ===== */
+        /* Rank badges */
         .gold   { background:linear-gradient(135deg,#ffd700,#ff9900); color:#000; font-weight:bold; }
         .silver { background:linear-gradient(135deg,#eee,#999);       color:#000; font-weight:bold; }
         .bronze { background:linear-gradient(135deg,#cd7f32,#8b4513); color:#fff; font-weight:bold; }
 
-        /* ===== Podium cards ===== */
+        /* Podium cards */
         #podium > div {
-            background: rgba(31,41,55,0.75);
-            backdrop-filter: blur(8px);
-            border-radius: 18px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background:rgba(31,41,55,0.75); backdrop-filter:blur(8px);
+            border-radius:18px; box-shadow:0 10px 30px rgba(0,0,0,0.5);
         }
-        /* Top-1 card — glow + float */
         #podium > div:nth-child(2) {
             animation: championGlow 2s infinite, floatUp 3s ease-in-out infinite;
-            transform: scale(1.08);
-            z-index: 2;
+            transform:scale(1.08); z-index:2;
         }
-        @keyframes championGlow {
-            50% { box-shadow: 0 0 55px rgba(255,215,0,0.95); }
-        }
-        @keyframes floatUp {
-            50% { transform: scale(1.08) translateY(-8px); }
-        }
+        @keyframes championGlow { 50% { box-shadow:0 0 55px rgba(255,215,0,.95); } }
+        @keyframes floatUp      { 50% { transform:scale(1.08) translateY(-8px); } }
 
-        /* ===== Crown pulse on top-1 ===== */
-        .crown-pulse {
-            display: inline-block;
-            font-size: 2.8rem;
-            animation: crownBounce 1.6s ease-in-out infinite;
-        }
+        .crown-pulse { display:inline-block; font-size:2.8rem; animation:crownBounce 1.6s ease-in-out infinite; }
         @keyframes crownBounce {
-            0%,100% { transform: translateY(0) scale(1); }
-            50%      { transform: translateY(-6px) scale(1.15); }
+            0%,100% { transform:translateY(0) scale(1); }
+            50%     { transform:translateY(-6px) scale(1.15); }
         }
 
-        /* ===== Table ===== */
-        .bg-gray-800 { background:rgba(31,41,55,0.78) !important; backdrop-filter:blur(10px); }
+        /* Table */
+        .bg-gray-800 { background:rgba(31,41,55,.78) !important; backdrop-filter:blur(10px); }
         tbody tr { transition:.25s; }
-        tbody tr:hover { background:rgba(255,255,255,0.1); }
+        tbody tr:hover { background:rgba(255,255,255,.1); }
 
-        /* ===== Score-change flash on row ===== */
+        /* Row flash */
         @keyframes scoreFlash {
-            0%   { background:rgba(16,185,129,0.45); }
+            0%   { background:rgba(16,185,129,.45); }
             100% { background:transparent; }
         }
-        .score-changed { animation: scoreFlash 1.8s ease forwards; }
+        .score-changed { animation:scoreFlash 1.8s ease forwards; }
 
-        /* ===== Toast notification ===== */
+        /* Toast */
         #toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            pointer-events: none;
+            position:fixed; top:20px; right:20px; z-index:9999;
+            display:flex; flex-direction:column; gap:10px; pointer-events:none;
         }
         .toast {
-            background: linear-gradient(135deg,rgba(16,185,129,0.92),rgba(5,150,105,0.92));
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(52,211,153,0.5);
-            color: #fff;
-            padding: 12px 20px;
-            border-radius: 14px;
-            font-size: 0.95rem;
-            font-weight: 700;
-            box-shadow: 0 8px 28px rgba(0,0,0,0.4);
-            animation: toastIn 0.35s cubic-bezier(.34,1.56,.64,1) forwards;
+            background:linear-gradient(135deg,rgba(16,185,129,.92),rgba(5,150,105,.92));
+            backdrop-filter:blur(10px); border:1px solid rgba(52,211,153,.5);
+            color:#fff; padding:12px 20px; border-radius:14px;
+            font-size:.92rem; font-weight:700;
+            box-shadow:0 8px 28px rgba(0,0,0,.4);
+            animation:toastIn .35s cubic-bezier(.34,1.56,.64,1) forwards;
         }
-        .toast.hide { animation: toastOut 0.4s ease forwards; }
+        .toast.hide { animation:toastOut .4s ease forwards; }
         @keyframes toastIn  { from{opacity:0;transform:translateX(60px)} to{opacity:1;transform:translateX(0)} }
         @keyframes toastOut { from{opacity:1;transform:translateX(0)} to{opacity:0;transform:translateX(60px)} }
 
-        /* ===== Round badge ===== */
-        #round-badge {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            background: rgba(99,102,241,0.22);
-            border: 2px solid rgba(129,140,248,0.55);
-            border-radius: 16px;
-            padding: 8px 28px;
-            margin-top: 10px;
+        /* ===== Round divider banner ===== */
+        #round-banner {
+            position:relative; text-align:center; margin:0 0 20px;
         }
-        #round-badge .round-num {
-            font-size: 1.8rem;
-            font-weight: 900;
-            color: #a5b4fc;
-            letter-spacing: .12em;
-            line-height: 1;
+        #round-banner .divider {
+            height:2px;
+            background:linear-gradient(90deg,transparent,rgba(165,180,252,.5),transparent);
+            margin:8px 0;
         }
-        #round-badge .round-label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: #f87171;
-            letter-spacing: .18em;
-            text-transform: uppercase;
+        #round-banner .round-title {
+            font-size:2rem; font-weight:900; color:#a5b4fc; letter-spacing:.15em;
+            text-shadow:0 0 20px rgba(165,180,252,.6);
+        }
+        #round-banner .round-status {
+            font-size:.7rem; font-weight:800; color:#f87171;
+            letter-spacing:.2em; text-transform:uppercase; margin-top:2px;
         }
 
         /* ===== Progress bar ===== */
         #progress-wrap {
-            background: rgba(31,41,55,0.7);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 14px;
-            padding: 14px 20px;
-            margin-bottom: 18px;
+            background:rgba(31,41,55,.7); border:1px solid rgba(255,255,255,.1);
+            border-radius:14px; padding:14px 20px; margin-bottom:18px;
         }
         #progress-bar-bg {
-            background: rgba(255,255,255,0.1);
-            border-radius: 99px;
-            height: 18px;
-            overflow: hidden;
-            position: relative;
+            background:rgba(255,255,255,.1); border-radius:99px; height:18px; overflow:hidden;
         }
         #progress-bar-fill {
-            height: 100%;
-            border-radius: 99px;
-            background: linear-gradient(90deg,#6366f1,#f59e0b,#ef4444);
-            transition: width 0.8s cubic-bezier(.34,1.2,.64,1);
-            position: relative;
+            height:100%; border-radius:99px;
+            background:linear-gradient(90deg,#6366f1,#f59e0b,#ef4444);
+            transition:width .8s cubic-bezier(.34,1.2,.64,1); position:relative;
         }
         #progress-bar-fill::after {
-            content:'';
-            position:absolute; top:0; left:0; right:0; bottom:0;
-            background: linear-gradient(90deg,transparent 60%,rgba(255,255,255,0.25));
-            border-radius: 99px;
+            content:''; position:absolute; inset:0;
+            background:linear-gradient(90deg,transparent 60%,rgba(255,255,255,.25));
+            border-radius:99px;
         }
         #progress-winner-banner {
-            display:none;
-            margin-top:10px;
-            text-align:center;
-            font-size:1.1rem;
-            font-weight:900;
-            color:#fbbf24;
-            text-shadow: 0 0 18px rgba(251,191,36,0.7);
-            animation: winnerGlow 1.2s ease-in-out infinite alternate;
+            display:none; margin-top:10px; text-align:center;
+            font-size:1rem; font-weight:900; color:#fbbf24;
+            text-shadow:0 0 18px rgba(251,191,36,.7);
+            animation:winnerGlow 1.2s ease-in-out infinite alternate;
         }
-        @keyframes winnerGlow { to { text-shadow: 0 0 36px rgba(251,191,36,1); } }
+        @keyframes winnerGlow { to { text-shadow:0 0 36px rgba(251,191,36,1); } }
+
+        /* ===== Hot Player + Last Place boxes ===== */
+        .stat-box {
+            background:rgba(31,41,55,.75); backdrop-filter:blur(8px);
+            border-radius:16px; padding:14px 18px;
+            border:1px solid rgba(255,255,255,.08);
+        }
+        .stat-box .sb-label {
+            font-size:.68rem; font-weight:800; letter-spacing:.16em;
+            text-transform:uppercase; margin-bottom:6px;
+        }
+        .stat-box .sb-name  { font-size:1.1rem; font-weight:900; }
+        .stat-box .sb-sub   { font-size:.78rem; color:#9ca3af; margin-top:3px; }
 
         /* ===== TV Mode ===== */
         .tv-mode            { font-size:1.7rem; }
@@ -163,67 +132,164 @@
         .tv-mode th,
         .tv-mode td         { padding:1.8rem 1.2rem; }
 
-        /* ===== Signature ===== */
+        /* ===== Winner Screen overlay ===== */
+        #winner-screen {
+            display:none; position:fixed; inset:0; z-index:8888;
+            background:radial-gradient(ellipse at center, #1a0a3b 0%, #0d0020 100%);
+            flex-direction:column; align-items:center; justify-content:center;
+            text-align:center; padding:40px;
+        }
+        #winner-screen.show { display:flex; }
+
+        /* Stars/confetti layer */
+        #winner-screen canvas#confetti-canvas {
+            position:absolute; inset:0; pointer-events:none; z-index:0;
+        }
+        #winner-content { position:relative; z-index:1; }
+
+        .winner-title {
+            font-size:1rem; font-weight:900; letter-spacing:.3em;
+            color:#a5b4fc; text-transform:uppercase; margin-bottom:8px;
+        }
+        .winner-crown { font-size:6rem; line-height:1; animation:crownBounce 1.6s infinite; margin-bottom:10px; }
+        .winner-name  {
+            font-size:3.5rem; font-weight:900; color:#fbbf24;
+            text-shadow:0 0 40px rgba(251,191,36,.9), 0 0 80px rgba(251,191,36,.5);
+            line-height:1; margin-bottom:8px;
+        }
+        .winner-score {
+            font-size:2rem; font-weight:900; color:#6ee7b7; margin-bottom:6px;
+            text-shadow:0 0 20px rgba(110,231,183,.6);
+        }
+        .winner-sub {
+            font-size:.9rem; font-weight:700; color:#c4b5fd;
+            letter-spacing:.18em; text-transform:uppercase; margin-bottom:28px;
+        }
+
+        /* Share card (hidden, used for screenshot) */
+        #share-card {
+            position:fixed; left:-9999px; top:0;
+            width:400px; padding:40px 32px;
+            background:linear-gradient(145deg,#1e0a3c,#0d1b3e);
+            border-radius:24px; text-align:center; color:#fff;
+            font-family:Arial,sans-serif;
+        }
+
+        /* Signature */
         #signature {
             position:fixed; bottom:18px; left:18px; z-index:999;
-            font-size:0.82rem; font-weight:600; color:#fff;
+            font-size:.82rem; font-weight:600; color:#fff;
             letter-spacing:.03em; pointer-events:none;
-            text-shadow:0 1px 6px rgba(0,0,0,0.7); user-select:none;
+            text-shadow:0 1px 6px rgba(0,0,0,.7); user-select:none;
         }
         #signature .heart { color:#ff3b3b; display:inline-block; animation:heartbeat 1.4s ease-in-out infinite; }
         @keyframes heartbeat {
-            0%  { transform:scale(1);    }
-            14% { transform:scale(1.30); }
-            28% { transform:scale(1);    }
-            42% { transform:scale(1.20); }
-            56% { transform:scale(1);    }
+            0%  { transform:scale(1); }  14% { transform:scale(1.30); }
+            28% { transform:scale(1); }  42% { transform:scale(1.20); }
+            56% { transform:scale(1); }
         }
     </style>
 </head>
 <body class="text-gray-100 min-h-screen bg-cover bg-center bg-fixed"
-      style="background-image:linear-gradient(rgba(0,0,0,0.65),rgba(0,0,0,0.65)),url('assets/background.jpg');">
+      style="background-image:linear-gradient(rgba(0,0,0,.65),rgba(0,0,0,.65)),url('assets/background.jpg');">
 
-    <!-- Toast container -->
+    <!-- Toast -->
     <div id="toast-container"></div>
 
     <!-- Signature -->
     <div id="signature">Made from Thắng with <span class="heart">♥</span></div>
 
+    <!-- ===== WINNER SCREEN ===== -->
+    <div id="winner-screen">
+        <canvas id="confetti-canvas" style="position:absolute;inset:0;pointer-events:none;"></canvas>
+        <div id="winner-content">
+            <p class="winner-title">🎲 FLIP 7 · GAME OVER</p>
+            <div class="winner-crown">👑</div>
+            <p class="winner-title" style="letter-spacing:.15em;color:#fbbf24;font-size:1.1rem;">CHAMPION</p>
+            <div class="winner-name" id="ws-name">—</div>
+            <div class="winner-score" id="ws-score">0 POINTS</div>
+            <div class="winner-sub">🎲 FLIP 7 WINNER</div>
+
+            <!-- Co-winner -->
+            <div id="ws-cowinner" class="hidden mb-4 text-purple-300 font-bold text-sm tracking-wide"></div>
+
+            <!-- Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <button id="btn-share-result"
+                    class="bg-gradient-to-r from-purple-600 to-pink-600 hover:brightness-110 text-white font-black py-3 px-8 rounded-xl shadow-lg text-base transition-all">
+                    📸 Tạo ảnh kết quả
+                </button>
+                <button id="btn-back-scoreboard"
+                    class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-xl text-base transition-all">
+                    📊 Xem bảng điểm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share card (off-screen, for html2canvas) -->
+    <div id="share-card">
+        <div style="font-size:1.4rem;font-weight:900;color:#a5b4fc;letter-spacing:.2em;margin-bottom:16px;">🎲 FLIP 7 NIGHT</div>
+        <div style="font-size:.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:.15em;margin-bottom:4px;">Winner</div>
+        <div id="sc-name"  style="font-size:2.4rem;font-weight:900;color:#fbbf24;margin-bottom:4px;"></div>
+        <div id="sc-score" style="font-size:1.4rem;font-weight:900;color:#6ee7b7;margin-bottom:16px;"></div>
+        <div style="height:1px;background:rgba(255,255,255,.1);margin:12px 0;"></div>
+        <div style="font-size:.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:.15em;margin-bottom:4px;">Players</div>
+        <div id="sc-players" style="font-size:1.6rem;font-weight:900;color:#e5e7eb;margin-bottom:16px;"></div>
+        <div style="font-size:.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:.15em;margin-bottom:4px;">Total Rounds</div>
+        <div id="sc-rounds"  style="font-size:1.6rem;font-weight:900;color:#e5e7eb;margin-bottom:20px;"></div>
+        <div style="font-size:.7rem;color:#4b5563;">Made from Thắng with ♥ · flip7live</div>
+    </div>
+
+    <!-- ===== MAIN APP ===== -->
     <div id="app-container" class="container mx-auto px-4 py-6 max-w-4xl">
 
-        <!-- ===== HEADER ===== -->
-        <div class="flex flex-col items-center mb-6 text-center">
+        <!-- Header -->
+        <div class="flex flex-col items-center mb-4 text-center">
             <img src="assets/logo.png" class="w-32 md:w-48 mb-4 drop-shadow-2xl">
             <h1 class="text-3xl md:text-6xl font-black text-yellow-400 tracking-widest">🎲 FLIP 7 LIVE</h1>
-
-            <!-- Round badge -->
-            <div id="round-badge">
-                <span class="round-num" id="round-num-text">—</span>
-                <span class="round-label">🔥 ĐANG CHƠI</span>
-            </div>
-
             <button id="btn-tv"
                 class="mt-5 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all">
                 📺 TV Mode
             </button>
         </div>
 
-        <!-- ===== PROGRESS BAR ===== -->
+        <!-- Round banner -->
+        <div id="round-banner">
+            <div class="divider"></div>
+            <div class="round-title" id="round-title-text">ROUND —</div>
+            <div class="round-status">🔥 ĐANG THI ĐẤU</div>
+            <div class="divider"></div>
+        </div>
+
+        <!-- Progress bar -->
         <div id="progress-wrap">
             <div class="flex justify-between items-center mb-2">
                 <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">ROUND PROGRESS</span>
                 <span class="text-xs font-bold text-indigo-300" id="progress-label">0 / 200</span>
             </div>
-            <div id="progress-bar-bg">
-                <div id="progress-bar-fill" style="width:0%"></div>
-            </div>
+            <div id="progress-bar-bg"><div id="progress-bar-fill" style="width:0%"></div></div>
             <div id="progress-winner-banner"></div>
         </div>
 
-        <!-- ===== PODIUM ===== -->
+        <!-- Hot Player + Last Place -->
+        <div class="grid grid-cols-2 gap-3 mb-6" id="stat-boxes">
+            <div class="stat-box">
+                <div class="sb-label text-orange-400">🔥 HOT PLAYER</div>
+                <div class="sb-name text-orange-300" id="hot-player-name">—</div>
+                <div class="sb-sub" id="hot-player-sub">Chưa có dữ liệu</div>
+            </div>
+            <div class="stat-box">
+                <div class="sb-label text-red-400">💀 CẦN CỐ GẮNG</div>
+                <div class="sb-name text-red-300" id="last-player-name">—</div>
+                <div class="sb-sub" id="last-player-sub">—</div>
+            </div>
+        </div>
+
+        <!-- Podium -->
         <div id="podium" class="grid grid-cols-3 gap-3 mb-8 text-center"></div>
 
-        <!-- ===== SCORE TABLE ===== -->
+        <!-- Score table -->
         <div class="bg-gray-800 rounded-xl shadow-xl overflow-hidden border border-gray-700">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse" id="score-table">
@@ -240,7 +306,7 @@
                 </table>
             </div>
         </div>
-    </div>
+    </div><!-- /app-container -->
 
     <!-- ===== FIREBASE + LOGIC ===== -->
     <script type="module">
@@ -248,200 +314,308 @@
         import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey:            "AIzaSyDUTKQK4mUKMBc-f8cnu-JAEhQ5XHZeg-E",
-            authDomain:        "flip7live.firebaseapp.com",
-            projectId:         "flip7live",
-            storageBucket:     "flip7live.firebasestorage.app",
-            messagingSenderId: "803983803794",
-            appId:             "1:803983803794:web:70bbe5349d3a63650ded4b",
-            measurementId:     "G-RNQKM7R0S6"
+            apiKey:"AIzaSyDUTKQK4mUKMBc-f8cnu-JAEhQ5XHZeg-E",
+            authDomain:"flip7live.firebaseapp.com", projectId:"flip7live",
+            storageBucket:"flip7live.firebasestorage.app",
+            messagingSenderId:"803983803794",
+            appId:"1:803983803794:web:70bbe5349d3a63650ded4b",
+            measurementId:"G-RNQKM7R0S6"
         };
-
         const app = initializeApp(firebaseConfig);
         const db  = getFirestore(app);
 
-        // ── Avatar pool (animal emojis) ──────────────────────────────────────
-        const AVATARS = ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯',
-                         '🦁','🐮','🐷','🐸','🐙','🦋','🐧','🐦','🦆','🦉'];
-        const avatarMap = {};
-        function getAvatar(name) {
-            if (!avatarMap[name]) {
-                // deterministic: sum char codes mod pool length
-                const idx = [...name].reduce((s,c)=>s+c.charCodeAt(0),0) % AVATARS.length;
-                avatarMap[name] = AVATARS[idx];
+        // ── Avatar pool ───────────────────────────────────────────────────────
+        const AVATARS=['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯',
+                       '🦁','🐮','🐷','🐸','🐙','🦋','🐧','🐦','🦆','🦉'];
+        const avatarMap={};
+        function getAvatar(name){
+            if(!avatarMap[name]){
+                const idx=[...name].reduce((s,c)=>s+c.charCodeAt(0),0)%AVATARS.length;
+                avatarMap[name]=AVATARS[idx];
             }
             return avatarMap[name];
         }
 
-        // ── Previous totals for change detection ────────────────────────────
-        let prevTotals = {};   // { playerName: total }
-        let prevLeader = null;
-        let firstLoad  = true;
+        // ── Encourage phrases ─────────────────────────────────────────────────
+        const PHRASES=['Còn cơ hội!','Đừng bỏ cuộc!','Flip tiếp đi!','Cố lên nào!','Comeback thôi!'];
 
-        // ── Toast helper ─────────────────────────────────────────────────────
-        function showToast(msg) {
-            const container = document.getElementById('toast-container');
-            const el = document.createElement('div');
-            el.className = 'toast';
-            el.innerHTML = msg;
-            container.appendChild(el);
-            setTimeout(() => {
+        // ── State ─────────────────────────────────────────────────────────────
+        let prevTotals={}, prevLeader=null, firstLoad=true, prevRounds=0;
+        let currentData=null;
+
+        // ── Toast ─────────────────────────────────────────────────────────────
+        function showToast(msg, color='rgba(16,185,129,.92),rgba(5,150,105,.92)'){
+            const el=document.createElement('div');
+            el.className='toast';
+            el.style.background=`linear-gradient(135deg,${color})`;
+            el.innerHTML=msg;
+            document.getElementById('toast-container').appendChild(el);
+            setTimeout(()=>{
                 el.classList.add('hide');
-                el.addEventListener('animationend', () => el.remove());
-            }, 2200);
+                el.addEventListener('animationend',()=>el.remove());
+            },2400);
         }
 
-        // ── Firestore listener ───────────────────────────────────────────────
-        onSnapshot(doc(db, "games", "main"), (docSnap) => {
-            if (docSnap.exists()) {
-                renderScoreboard(docSnap.data());
+        // ── Firestore listener ────────────────────────────────────────────────
+        onSnapshot(doc(db,"games","main"),(snap)=>{
+            if(snap.exists()){
+                currentData=snap.data();
+                renderScoreboard(currentData);
             } else {
-                document.getElementById('table-body').innerHTML =
-                    `<tr><td colspan="3" class="text-center py-8 text-red-400">Chưa có dữ liệu. Khởi tạo từ trang Admin.</td></tr>`;
+                document.getElementById('table-body').innerHTML=
+                    `<tr><td colspan="3" class="text-center py-8 text-red-400">Chưa có dữ liệu. Vào Admin để khởi tạo.</td></tr>`;
             }
-        }, (err) => {
-            document.getElementById('table-body').innerHTML =
-                `<tr><td colspan="3" class="text-center py-8 text-red-400">Lỗi kết nối: ${err.message}</td></tr>`;
+        },(err)=>{
+            document.getElementById('table-body').innerHTML=
+                `<tr><td colspan="3" class="text-center py-8 text-red-400">Lỗi: ${err.message}</td></tr>`;
         });
 
-        // ── Main render ──────────────────────────────────────────────────────
-        function renderScoreboard(data) {
-            const totalRounds = data.rounds  || 0;
-            const players     = data.players || [];
-
-            const sorted = players
-                .map(p => ({ ...p, total: p.scores.reduce((s,v)=>s+(v||0),0) }))
+        // ── Main render ───────────────────────────────────────────────────────
+        function renderScoreboard(data){
+            const totalRounds=data.rounds||0;
+            const status=data.status||"playing";
+            const sorted=(data.players||[])
+                .map(p=>({...p,total:p.scores.reduce((s,v)=>s+(v||0),0)}))
                 .sort((a,b)=>b.total-a.total);
 
-            // Round badge
-            document.getElementById('round-num-text').textContent = `ROUND ${totalRounds}`;
-
-            // Progress bar (goal = 200)
-            const GOAL = 200;
-            const topScore = sorted[0]?.total || 0;
-            const pct = Math.min(100, Math.round(topScore / GOAL * 100));
-            document.getElementById('progress-bar-fill').style.width = pct + '%';
-            document.getElementById('progress-label').textContent = `${topScore} / ${GOAL}`;
-
-            // Winner banner
-            const winnerBanner = document.getElementById('progress-winner-banner');
-            const winners = sorted.filter(p => p.total >= GOAL && p.total === sorted[0].total);
-            if (winners.length > 0) {
-                const names = winners.map(p=>`${getAvatar(p.name)} ${p.name}`).join('  &  ');
-                winnerBanner.style.display = 'block';
-                winnerBanner.innerHTML = winners.length > 1
-                    ? `🏆 ĐỒNG GIẢI NHẤT: ${names} 🏆`
-                    : `🏆 NGƯỜI CHIẾN THẮNG: ${names} 🏆`;
-            } else {
-                winnerBanner.style.display = 'none';
+            // Winner screen
+            if(status==="ended" && sorted.length>0){
+                showWinnerScreen(sorted, totalRounds);
+                return;
             }
+            document.getElementById('winner-screen').classList.remove('show');
 
-            // Change detection (skip first load)
-            const changedRows = new Set();
-            if (!firstLoad) {
-                sorted.forEach(p => {
-                    const prev = prevTotals[p.name];
-                    if (prev !== undefined && p.total !== prev) {
-                        const diff = p.total - prev;
-                        const sign = diff > 0 ? `+${diff}` : `${diff}`;
+            // Round banner
+            document.getElementById('round-title-text').textContent=`🎲 ROUND ${totalRounds}`;
+
+            // New round toast
+            if(!firstLoad && totalRounds > prevRounds){
+                showToast(`⚡ ROUND ${totalRounds} STARTED!`,'rgba(99,102,241,.92),rgba(139,92,246,.92)');
+            }
+            prevRounds=totalRounds;
+
+            // Progress bar
+            const GOAL=200, topScore=sorted[0]?.total||0;
+            const pct=Math.min(100,Math.round(topScore/GOAL*100));
+            document.getElementById('progress-bar-fill').style.width=pct+'%';
+            document.getElementById('progress-label').textContent=`${topScore} / ${GOAL}`;
+
+            const winners=sorted.filter(p=>p.total>=GOAL && p.total===sorted[0].total);
+            const wb=document.getElementById('progress-winner-banner');
+            if(winners.length>0){
+                const names=winners.map(p=>`${getAvatar(p.name)} ${p.name}`).join(' & ');
+                wb.style.display='block';
+                wb.innerHTML=winners.length>1?`🏆 ĐỒNG GIẢI NHẤT: ${names}`:`🏆 ${names} ĐẠT MỐC 200!`;
+            } else wb.style.display='none';
+
+            // Change detection
+            const changedRows=new Set();
+            if(!firstLoad){
+                sorted.forEach(p=>{
+                    const prev=prevTotals[p.name];
+                    if(prev!==undefined && p.total!==prev){
+                        const diff=p.total-prev, sign=diff>0?`+${diff}`:`${diff}`;
                         showToast(`${getAvatar(p.name)} <strong>${p.name}</strong> ${diff>0?'tăng':'giảm'} điểm! ${sign} → <span style="color:#fbbf24">${p.total}</span>`);
                         changedRows.add(p.name);
                     }
                 });
-                // New leader?
-                const newLeader = sorted[0]?.name;
-                if (prevLeader && newLeader !== prevLeader) {
-                    setTimeout(() => showToast(`👑 <strong>${newLeader}</strong> vươn lên DẪN ĐẦU!`), 400);
-                }
+                const newLeader=sorted[0]?.name;
+                if(prevLeader && newLeader!==prevLeader)
+                    setTimeout(()=>showToast(`👑 <strong>${newLeader}</strong> vươn lên DẪN ĐẦU!`,'rgba(234,179,8,.92),rgba(202,138,4,.92)'),500);
             }
-            firstLoad = false;
+            firstLoad=false;
+            sorted.forEach(p=>{prevTotals[p.name]=p.total;});
+            prevLeader=sorted[0]?.name||null;
 
-            // Save state for next comparison
-            sorted.forEach(p => { prevTotals[p.name] = p.total; });
-            prevLeader = sorted[0]?.name || null;
+            // Hot Player: highest sum of last 2 rounds
+            renderHotPlayer(sorted, totalRounds);
+
+            // Last place
+            renderLastPlace(sorted);
 
             renderPodium(sorted);
             renderTable(sorted, totalRounds, changedRows);
         }
 
-        // ── Podium ───────────────────────────────────────────────────────────
-        function renderPodium(sorted) {
-            const div = document.getElementById('podium');
-            if (!sorted.length) { div.innerHTML=''; return; }
-            const [p1,p2,p3] = sorted;
+        // ── Hot Player ────────────────────────────────────────────────────────
+        function renderHotPlayer(sorted, totalRounds){
+            if(sorted.length===0 || totalRounds<2){
+                document.getElementById('hot-player-name').textContent='—';
+                document.getElementById('hot-player-sub').textContent='Cần ít nhất 2 vòng';
+                return;
+            }
+            let hot=null, hotPts=0;
+            sorted.forEach(p=>{
+                const recent=(p.scores[totalRounds-1]||0)+(p.scores[totalRounds-2]||0);
+                if(recent>hotPts){hotPts=recent;hot=p;}
+            });
+            if(hot){
+                document.getElementById('hot-player-name').textContent=`${getAvatar(hot.name)} ${hot.name}`;
+                document.getElementById('hot-player-sub').textContent=`+${hotPts} điểm trong 2 vòng gần nhất`;
+            }
+        }
 
-            div.innerHTML = `
-              <!-- #2 -->
+        // ── Last Place ────────────────────────────────────────────────────────
+        function renderLastPlace(sorted){
+            if(sorted.length===0){
+                document.getElementById('last-player-name').textContent='—';
+                document.getElementById('last-player-sub').textContent='';
+                return;
+            }
+            const last=sorted[sorted.length-1];
+            const phrase=PHRASES[Math.floor(Math.random()*PHRASES.length)];
+            document.getElementById('last-player-name').textContent=`${getAvatar(last.name)} ${last.name}`;
+            document.getElementById('last-player-sub').textContent=`Hạng ${sorted.length} · ${phrase}`;
+        }
+
+        // ── Podium ────────────────────────────────────────────────────────────
+        function renderPodium(sorted){
+            const div=document.getElementById('podium');
+            if(!sorted.length){div.innerHTML='';return;}
+            const[p1,p2,p3]=sorted;
+            div.innerHTML=`
               <div class="flex flex-col justify-end items-center p-3 rounded-lg border-t-4 border-gray-400 mt-6">
-                <span class="text-2xl mb-1">${p2 ? getAvatar(p2.name) : ''}</span>
+                <span class="text-2xl mb-1">${p2?getAvatar(p2.name):''}</span>
                 <span class="text-xs text-gray-400 font-bold">#2</span>
                 <span class="font-bold text-sm text-gray-200 truncate w-full text-center mt-1">${p2?p2.name:'-'}</span>
                 <span class="text-xl font-extrabold text-gray-300">${p2?p2.total:0}</span>
               </div>
-
-              <!-- #1 — crown card -->
               <div class="flex flex-col justify-end items-center p-3 rounded-lg border-t-4 border-yellow-400 shadow-2xl">
                 <span class="crown-pulse">👑</span>
-                <span class="text-2xl mb-1">${p1 ? getAvatar(p1.name) : ''}</span>
+                <span class="text-2xl mb-1">${p1?getAvatar(p1.name):''}</span>
                 <span class="font-black text-base text-yellow-300 truncate w-full text-center mt-1">${p1?p1.name:'-'}</span>
                 <span class="text-3xl font-black text-yellow-400">${p1?p1.total:0}</span>
                 <span class="text-xs font-black text-red-400 mt-1 tracking-widest">🔥 ĐANG DẪN ĐẦU</span>
               </div>
-
-              <!-- #3 -->
               <div class="flex flex-col justify-end items-center p-3 rounded-lg border-t-4 border-amber-700 mt-10">
-                <span class="text-2xl mb-1">${p3 ? getAvatar(p3.name) : ''}</span>
+                <span class="text-2xl mb-1">${p3?getAvatar(p3.name):''}</span>
                 <span class="text-xs text-gray-400 font-bold">#3</span>
                 <span class="font-bold text-sm text-gray-200 truncate w-full text-center mt-1">${p3?p3.name:'-'}</span>
                 <span class="text-xl font-extrabold text-amber-600">${p3?p3.total:0}</span>
-              </div>
-            `;
+              </div>`;
         }
 
-        // ── Score table ───────────────────────────────────────────────────────
-        function renderTable(sorted, totalRounds, changedRows) {
-            // Header
-            const header = document.getElementById('table-header');
-            let hHtml = `<th class="py-3 px-2 w-10 text-center">Hạng</th>
-                         <th class="py-3 px-3">Người chơi</th>`;
-            for (let i=1;i<=totalRounds;i++) hHtml += `<th class="py-3 px-2 text-center">V${i}</th>`;
-            hHtml += `<th class="py-3 px-4 text-right w-20">Tổng</th>`;
-            header.innerHTML = hHtml;
+        // ── Table ─────────────────────────────────────────────────────────────
+        function renderTable(sorted,totalRounds,changedRows){
+            const header=document.getElementById('table-header');
+            let hHtml=`<th class="py-3 px-2 w-10 text-center">Hạng</th><th class="py-3 px-3">Người chơi</th>`;
+            for(let i=1;i<=totalRounds;i++) hHtml+=`<th class="py-3 px-2 text-center">V${i}</th>`;
+            hHtml+=`<th class="py-3 px-4 text-right w-20">Tổng</th>`;
+            header.innerHTML=hHtml;
 
-            // Body
-            const tbody = document.getElementById('table-body');
-            let bHtml = '';
-            sorted.forEach((p, idx) => {
-                const rankClass = idx===0?'gold':idx===1?'silver':idx===2?'bronze':'';
-                const flashClass = changedRows.has(p.name) ? 'score-changed' : '';
-                bHtml += `
-                  <tr class="transition-colors ${flashClass}">
-                    <td class="py-3 px-2 text-center">
-                      <span class="inline-flex w-6 h-6 rounded-full items-center justify-center text-xs ${rankClass}">${idx+1}</span>
-                    </td>
-                    <td class="py-3 px-3 font-semibold text-yellow-300">
-                      <span class="mr-1">${getAvatar(p.name)}</span>${p.name}
-                    </td>`;
-                for (let i=0;i<totalRounds;i++) {
-                    const s = p.scores[i]!==undefined ? p.scores[i] : '-';
-                    bHtml += `<td class="py-3 px-2 text-center text-gray-300">${s}</td>`;
+            const tbody=document.getElementById('table-body');
+            let bHtml='';
+            sorted.forEach((p,idx)=>{
+                const rc=idx===0?'gold':idx===1?'silver':idx===2?'bronze':'';
+                const fl=changedRows.has(p.name)?'score-changed':'';
+                bHtml+=`<tr class="transition-colors ${fl}">
+                    <td class="py-3 px-2 text-center"><span class="inline-flex w-6 h-6 rounded-full items-center justify-center text-xs ${rc}">${idx+1}</span></td>
+                    <td class="py-3 px-3 font-semibold text-yellow-300"><span class="mr-1">${getAvatar(p.name)}</span>${p.name}</td>`;
+                for(let i=0;i<totalRounds;i++){
+                    const s=p.scores[i]!==undefined?p.scores[i]:'-';
+                    bHtml+=`<td class="py-3 px-2 text-center text-gray-300">${s}</td>`;
                 }
-                bHtml += `<td class="py-3 px-4 text-right font-black text-emerald-400 text-lg">${p.total}</td></tr>`;
+                bHtml+=`<td class="py-3 px-4 text-right font-black text-emerald-400 text-lg">${p.total}</td></tr>`;
             });
-            tbody.innerHTML = bHtml ||
-                `<tr><td colspan="3" class="text-center py-8 text-gray-400">Chưa có người chơi.</td></tr>`;
+            tbody.innerHTML=bHtml||`<tr><td colspan="3" class="text-center py-8 text-gray-400">Chưa có người chơi.</td></tr>`;
         }
+
+        // ── Winner Screen ─────────────────────────────────────────────────────
+        let confettiInterval=null;
+        function showWinnerScreen(sorted, totalRounds){
+            const ws=document.getElementById('winner-screen');
+            ws.classList.add('show');
+
+            const GOAL=200;
+            const topScore=sorted[0].total;
+            const winners=sorted.filter(p=>p.total>=GOAL && p.total===topScore);
+            // If nobody hit 200 yet, show the leader anyway
+            const champion = winners.length>0 ? winners : [sorted[0]];
+
+            document.getElementById('ws-name').textContent=
+                champion.map(p=>`${getAvatar(p.name)} ${p.name}`).join('  &  ');
+            document.getElementById('ws-score').textContent=`${champion[0].total} POINTS`;
+
+            const co=document.getElementById('ws-cowinner');
+            if(champion.length>1){
+                co.classList.remove('hidden');
+                co.textContent='🤝 ĐỒNG GIẢI NHẤT';
+            } else co.classList.add('hidden');
+
+            // Share card data
+            document.getElementById('sc-name').textContent=champion.map(p=>p.name).join(' & ');
+            document.getElementById('sc-score').textContent=`${champion[0].total} pts`;
+            document.getElementById('sc-players').textContent=sorted.length+' người';
+            document.getElementById('sc-rounds').textContent=totalRounds+' vòng';
+
+            // Confetti
+            startConfetti();
+        }
+
+        function startConfetti(){
+            if(confettiInterval) clearInterval(confettiInterval);
+            const canvas=document.getElementById('confetti-canvas');
+            const ctx=canvas.getContext('2d');
+            canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+            const particles=Array.from({length:120},()=>({
+                x:Math.random()*canvas.width, y:Math.random()*canvas.height-canvas.height,
+                r:Math.random()*6+3, d:Math.random()*120+80,
+                color:`hsl(${Math.random()*360},90%,65%)`,
+                tilt:Math.floor(Math.random()*10)-10, tiltAngle:0,
+                tiltAngleIncrement:Math.random()*.07+.05
+            }));
+            let angle=0;
+            confettiInterval=setInterval(()=>{
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                angle+=.01;
+                particles.forEach(p=>{
+                    p.tiltAngle+=p.tiltAngleIncrement;
+                    p.y+=Math.cos(angle+p.d)+1+p.r/2;
+                    p.x+=Math.sin(angle)*1.5;
+                    p.tilt=Math.sin(p.tiltAngle)*12;
+                    if(p.y>canvas.height+20) p.y=-20;
+                    ctx.beginPath();
+                    ctx.lineWidth=p.r;
+                    ctx.strokeStyle=p.color;
+                    ctx.moveTo(p.x+p.tilt+p.r/3,p.y);
+                    ctx.lineTo(p.x+p.tilt,p.y+p.tilt+p.r/5);
+                    ctx.stroke();
+                });
+            },16);
+        }
+
+        // ── Share / screenshot ────────────────────────────────────────────────
+        document.getElementById('btn-share-result').addEventListener('click', async ()=>{
+            const card=document.getElementById('share-card');
+            card.style.left='0'; card.style.position='fixed'; card.style.top='0';
+            try {
+                const canvas=await html2canvas(card,{backgroundColor:'#1e0a3c',scale:2});
+                card.style.left='-9999px';
+                const link=document.createElement('a');
+                link.download='flip7-result.png';
+                link.href=canvas.toDataURL('image/png');
+                link.click();
+            } catch(e){
+                card.style.left='-9999px';
+                alert('Không tạo được ảnh: '+e.message);
+            }
+        });
+
+        document.getElementById('btn-back-scoreboard').addEventListener('click',()=>{
+            document.getElementById('winner-screen').classList.remove('show');
+            if(confettiInterval){ clearInterval(confettiInterval); confettiInterval=null; }
+        });
 
         // ── TV Mode ───────────────────────────────────────────────────────────
-        const btnTv     = document.getElementById('btn-tv');
-        const container = document.getElementById('app-container');
-        btnTv.addEventListener('click', () => {
+        const btnTv=document.getElementById('btn-tv');
+        const container=document.getElementById('app-container');
+        btnTv.addEventListener('click',()=>{
             container.classList.toggle('tv-mode');
-            if (container.classList.contains('tv-mode')) {
-                btnTv.textContent = "📱 Normal Mode";
+            if(container.classList.contains('tv-mode')){
+                btnTv.textContent='📱 Normal Mode';
                 btnTv.classList.replace('bg-blue-600','bg-purple-600');
             } else {
-                btnTv.textContent = "📺 TV Mode";
+                btnTv.textContent='📺 TV Mode';
                 btnTv.classList.replace('bg-purple-600','bg-blue-600');
             }
         });
