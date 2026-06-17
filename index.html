@@ -157,17 +157,36 @@ url('assets/background.jpg');
     <div id="app-container" class="container mx-auto px-4 py-6 max-w-4xl">
         
         <!-- Header -->
-        <div class="flex justify-between items-center mb-6">
-            <div>
-                <h1 class="text-2xl md:text-5xl font-black text-yellow-400 tracking-widest">
-🎲 FLIP 7 LIVE
-</h1>
-                <p class="text-xs md:text-sm text-gray-400 mt-1">Chế độ xem Realtime • Cập nhật tự động</p>
-            </div>
-            <button id="btn-tv" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg shadow text-sm transition-all">
-                📺 TV Mode
-            </button>
-        </div>
+<div class="flex flex-col items-center mb-8 text-center">
+
+
+    <img 
+    src="assets/logo.png"
+    class="w-32 md:w-48 mb-4 drop-shadow-2xl">
+
+
+    <h1 class="text-3xl md:text-6xl font-black text-yellow-400 tracking-widest">
+        🎲 FLIP 7 LIVE
+    </h1>
+
+
+    <p class="text-sm md:text-lg text-gray-300 mt-2">
+        🃏 Realtime Scoreboard • Game Night
+    </p>
+
+
+    <button 
+    id="btn-tv"
+    class="mt-5 bg-blue-600 hover:bg-blue-700 
+    text-white font-bold py-3 px-8 
+    rounded-xl shadow-lg transition-all">
+
+        📺 TV Mode
+
+    </button>
+
+
+</div>
 
         <!-- Bảng Xếp Hạng Top 3 -->
         <div id="podium" class="grid grid-cols-3 gap-3 mb-8 text-center">
