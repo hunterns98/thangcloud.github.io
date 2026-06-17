@@ -6,226 +6,114 @@
     <title>Flip 7 Live Scoreboard - Viewer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-<style>
-
-body{
-    font-family: Arial, sans-serif;
-}
-
-
-/* ===== Hiệu ứng chung ===== */
-
-#app-container{
-    animation: fadeIn 0.8s ease;
-}
-
-
-@keyframes fadeIn{
-    from{
-        opacity:0;
-        transform:translateY(20px);
-    }
-
-    to{
-        opacity:1;
-        transform:translateY(0);
-    }
-}
-
-
-.gold {
-    background: linear-gradient(135deg,#ffd700,#ff9900);
-    color:#000;
-    font-weight:bold;
-}
-
-.silver {
-    background: linear-gradient(135deg,#eeeeee,#999);
-    color:#000;
-    font-weight:bold;
-}
-
-.bronze {
-    background: linear-gradient(135deg,#cd7f32,#8b4513);
-    color:white;
-    font-weight:bold;
-}
-
-
-#podium > div{
-
-    background:
-    rgba(31,41,55,0.75);
-
-    backdrop-filter:blur(8px);
-
-    border-radius:18px;
-
-    box-shadow:
-    0 10px 30px rgba(0,0,0,0.5);
-
-}
-
-
-#podium > div:nth-child(2){
-
-    animation:
-    championGlow 2s infinite,
-    floatUp 3s ease-in-out infinite;
-
-    transform:scale(1.08);
-
-    z-index:2;
-
-}
-
-
-
-@keyframes championGlow{
-
-    50%{
-
-        box-shadow:
-
-        0 0 45px rgba(255,215,0,0.9);
-
-    }
-
-}
-
-
-
-@keyframes floatUp{
-
-    50%{
-
-        transform:
-
-        scale(1.08)
-
-        translateY(-8px);
-
-    }
-
-}
-
-
-@keyframes championGlow{
-
-    50%{
-        box-shadow:
-        0 0 35px rgba(255,215,0,0.8);
-    }
-
-}
-
-
-.bg-gray-800{
-
-    background:
-    rgba(31,41,55,0.78)
-    !important;
-
-    backdrop-filter:
-    blur(10px);
-
-}
-
-
-tbody tr{
-
-    transition:0.25s;
-
-}
-
-
-tbody tr:hover{
-
-    background:
-    rgba(255,255,255,0.1);
-
-}
-
-
-.tv-mode{
-
-    font-size:1.7rem;
-
-}
-
-
-.tv-mode h1{
-
-    font-size:4rem;
-
-}
-
-
-.tv-mode table{
-
-    font-size:2rem;
-
-}
-
-
-.tv-mode th,
-.tv-mode td{
-
-    padding:
-    1.8rem 1.2rem;
-
-}
-
-</style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        /* ===== Hiệu ứng chung ===== */
+        #app-container {
+            animation: fadeIn 0.8s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .gold   { background: linear-gradient(135deg,#ffd700,#ff9900); color:#000; font-weight:bold; }
+        .silver { background: linear-gradient(135deg,#eeeeee,#999);    color:#000; font-weight:bold; }
+        .bronze { background: linear-gradient(135deg,#cd7f32,#8b4513); color:white; font-weight:bold; }
+
+        #podium > div {
+            background: rgba(31,41,55,0.75);
+            backdrop-filter: blur(8px);
+            border-radius: 18px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        /* Top 1 - glow + float */
+        #podium > div:nth-child(2) {
+            animation: championGlow 2s infinite, floatUp 3s ease-in-out infinite;
+            transform: scale(1.08);
+            z-index: 2;
+        }
+        @keyframes championGlow {
+            50% { box-shadow: 0 0 45px rgba(255,215,0,0.9); }
+        }
+        @keyframes floatUp {
+            50% { transform: scale(1.08) translateY(-8px); }
+        }
+
+        .bg-gray-800 {
+            background: rgba(31,41,55,0.78) !important;
+            backdrop-filter: blur(10px);
+        }
+        tbody tr {
+            transition: 0.25s;
+        }
+        tbody tr:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* ===== TV Mode ===== */
+        .tv-mode            { font-size: 1.7rem; }
+        .tv-mode h1         { font-size: 4rem; }
+        .tv-mode table      { font-size: 2rem; }
+        .tv-mode th,
+        .tv-mode td         { padding: 1.8rem 1.2rem; }
+
+        /* ===== Chữ ký góc trái dưới ===== */
+        #signature {
+            position: fixed;
+            bottom: 18px;
+            left: 18px;
+            z-index: 999;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #ffffff;
+            letter-spacing: 0.03em;
+            pointer-events: none;
+            text-shadow: 0 1px 6px rgba(0,0,0,0.7);
+            user-select: none;
+        }
+        #signature .heart {
+            color: #ff3b3b;
+            display: inline-block;
+            animation: heartbeat 1.4s ease-in-out infinite;
+        }
+        @keyframes heartbeat {
+            0%   { transform: scale(1);    }
+            14%  { transform: scale(1.30); }
+            28%  { transform: scale(1);    }
+            42%  { transform: scale(1.20); }
+            56%  { transform: scale(1);    }
+            100% { transform: scale(1);    }
+        }
     </style>
 </head>
-<body 
-class="text-gray-100 min-h-screen bg-cover bg-center bg-fixed"
-style="
-background-image:
-linear-gradient(
-rgba(0,0,0,0.65),
-rgba(0,0,0,0.65)
-),
-url('assets/background.jpg');
-">
+<body
+    class="text-gray-100 min-h-screen bg-cover bg-center bg-fixed"
+    style="background-image: linear-gradient(rgba(0,0,0,0.65),rgba(0,0,0,0.65)), url('assets/background.jpg');">
+
+    <!-- Chữ ký -->
+    <div id="signature">Made from Thắng with <span class="heart">♥</span></div>
+
     <div id="app-container" class="container mx-auto px-4 py-6 max-w-4xl">
-        
+
         <!-- Header -->
-<div class="flex flex-col items-center mb-8 text-center">
-
-
-    <img 
-    src="assets/logo.png"
-    class="w-32 md:w-48 mb-4 drop-shadow-2xl">
-
-
-    <h1 class="text-3xl md:text-6xl font-black text-yellow-400 tracking-widest">
-        🎲 FLIP 7 LIVE
-    </h1>
-
-
-    <p class="text-sm md:text-lg text-gray-300 mt-2">
-        🃏 Realtime Scoreboard • Game Night
-    </p>
-
-
-    <button 
-    id="btn-tv"
-    class="mt-5 bg-blue-600 hover:bg-blue-700 
-    text-white font-bold py-3 px-8 
-    rounded-xl shadow-lg transition-all">
-
-        📺 TV Mode
-
-    </button>
-
-
-</div>
+        <div class="flex flex-col items-center mb-8 text-center">
+            <img src="assets/logo.png" class="w-32 md:w-48 mb-4 drop-shadow-2xl">
+            <h1 class="text-3xl md:text-6xl font-black text-yellow-400 tracking-widest">
+                🎲 FLIP 7 LIVE
+            </h1>
+            <p class="text-sm md:text-lg text-gray-300 mt-2">🃏 Realtime Scoreboard • Game Night</p>
+            <button id="btn-tv"
+                class="mt-5 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all">
+                📺 TV Mode
+            </button>
+        </div>
 
         <!-- Bảng Xếp Hạng Top 3 -->
         <div id="podium" class="grid grid-cols-3 gap-3 mb-8 text-center">
-            <!-- Sẽ được render tự động bằng JS -->
+            <!-- render by JS -->
         </div>
 
         <!-- Bảng Điểm Chi Tiết -->
@@ -247,131 +135,117 @@ url('assets/background.jpg');
                 </table>
             </div>
         </div>
-    </div>
+
+    </div><!-- /app-container -->
 
     <!-- Firebase Realtime Logic -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { initializeApp }        from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyDUTKQK4mUKMBc-f8cnu-JAEhQ5XHZeg-E",
-            authDomain: "flip7live.firebaseapp.com",
-            projectId: "flip7live",
-            storageBucket: "flip7live.firebasestorage.app",
+            apiKey:            "AIzaSyDUTKQK4mUKMBc-f8cnu-JAEhQ5XHZeg-E",
+            authDomain:        "flip7live.firebaseapp.com",
+            projectId:         "flip7live",
+            storageBucket:     "flip7live.firebasestorage.app",
             messagingSenderId: "803983803794",
-            appId: "1:803983803794:web:70bbe5349d3a63650ded4b",
-            measurementId: "G-RNQKM7R0S6"
+            appId:             "1:803983803794:web:70bbe5349d3a63650ded4b",
+            measurementId:     "G-RNQKM7R0S6"
         };
 
-        // Khởi tạo app trước, sau đó khởi tạo db
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        const db  = getFirestore(app);
 
         onSnapshot(doc(db, "games", "main"), (docSnap) => {
             if (docSnap.exists()) {
-                const data = docSnap.data();
-                renderScoreboard(data);
+                renderScoreboard(docSnap.data());
             } else {
-                document.getElementById('table-body').innerHTML = `<tr><td colspan="3" class="text-center py-8 text-red-400">Chưa có dữ liệu trận đấu. Vui lòng khởi tạo từ trang Admin.</td></tr>`;
+                document.getElementById('table-body').innerHTML =
+                    `<tr><td colspan="3" class="text-center py-8 text-red-400">Chưa có dữ liệu trận đấu. Vui lòng khởi tạo từ trang Admin.</td></tr>`;
             }
         }, (error) => {
             console.error("Lỗi Firestore Realtime:", error);
-            document.getElementById('table-body').innerHTML = `<tr><td colspan="3" class="text-center py-8 text-red-400">Lỗi kết nối: ${error.message}</td></tr>`;
+            document.getElementById('table-body').innerHTML =
+                `<tr><td colspan="3" class="text-center py-8 text-red-400">Lỗi kết nối: ${error.message}</td></tr>`;
         });
 
         function renderScoreboard(data) {
-            const totalRounds = data.rounds || 0;
-            const players = data.players || [];
+            const totalRounds = data.rounds  || 0;
+            const players     = data.players || [];
 
-            const processedPlayers = players.map(p => {
-                const totalScore = p.scores.reduce((sum, score) => sum + (score || 0), 0);
-                return { ...p, total: totalScore };
-            });
+            const processedPlayers = players
+                .map(p => ({ ...p, total: p.scores.reduce((s, v) => s + (v || 0), 0) }))
+                .sort((a, b) => b.total - a.total);
 
-            processedPlayers.sort((a, b) => b.total - a.total);
             renderPodium(processedPlayers);
 
+            // Header
             const headerRow = document.getElementById('table-header');
             let headerHtml = `<th class="py-3 px-4 w-16">Hạng</th><th class="py-3 px-4">Người chơi</th>`;
-            for (let i = 1; i <= totalRounds; i++) {
-                headerHtml += `<th class="py-3 px-2 text-center">V${i}</th>`;
-            }
+            for (let i = 1; i <= totalRounds; i++) headerHtml += `<th class="py-3 px-2 text-center">V${i}</th>`;
             headerHtml += `<th class="py-3 px-4 text-right w-24">Tổng</th>`;
             headerRow.innerHTML = headerHtml;
 
+            // Body
             const tbody = document.getElementById('table-body');
             let bodyHtml = '';
-
             processedPlayers.forEach((player, index) => {
                 let rankClass = '';
-                let rankText = index + 1;
                 if (index === 0) rankClass = 'gold';
                 else if (index === 1) rankClass = 'silver';
                 else if (index === 2) rankClass = 'bronze';
 
                 bodyHtml += `
                     <tr class="hover:bg-gray-750 transition-colors">
-                        <td class="py-3 px-4 font-bold text-center"><span class="inline-block w-6 h-6 rounded-full flex items-center justify-center ${rankClass}">${rankText}</span></td>
-                        <td class="py-3 px-4 font-semibold text-yellow-400">${player.name}</td>
-                `;
-
+                        <td class="py-3 px-4 font-bold text-center">
+                            <span class="inline-flex w-6 h-6 rounded-full items-center justify-center ${rankClass}">${index + 1}</span>
+                        </td>
+                        <td class="py-3 px-4 font-semibold text-yellow-400">${player.name}</td>`;
                 for (let i = 0; i < totalRounds; i++) {
                     const score = player.scores[i] !== undefined ? player.scores[i] : '-';
                     bodyHtml += `<td class="py-3 px-2 text-center text-gray-300">${score}</td>`;
                 }
-
                 bodyHtml += `
                         <td class="py-3 px-4 text-right font-bold text-emerald-400 text-lg">${player.total}</td>
-                    </tr>
-                `;
+                    </tr>`;
             });
-
-            tbody.innerHTML = bodyHtml || `<tr><td colspan="3" class="text-center py-8 text-gray-400">Chưa có người chơi nào.</td></tr>`;
+            tbody.innerHTML = bodyHtml ||
+                `<tr><td colspan="3" class="text-center py-8 text-gray-400">Chưa có người chơi nào.</td></tr>`;
         }
 
-        function renderPodium(sortedPlayers) {
+        function renderPodium(sorted) {
             const podiumDiv = document.getElementById('podium');
-            if (sortedPlayers.length === 0) {
-                podiumDiv.innerHTML = '';
-                return;
-            }
-
-            const p1 = sortedPlayers[0];
-            const p2 = sortedPlayers[1];
-            const p3 = sortedPlayers[2];
-
+            if (sorted.length === 0) { podiumDiv.innerHTML = ''; return; }
+            const [p1, p2, p3] = sorted;
             podiumDiv.innerHTML = `
                 <div class="flex flex-col justify-end items-center p-2 bg-gray-800 rounded-lg border-t-4 border-gray-400 mt-4">
                     <span class="text-xs text-gray-400">#2</span>
-                    <span class="font-bold text-sm text-gray-200 truncate w-full">${p2 ? p2.name : '-'}</span>
+                    <span class="font-bold text-sm text-gray-200 truncate w-full text-center">${p2 ? p2.name : '-'}</span>
                     <span class="text-xl font-extrabold text-gray-300">${p2 ? p2.total : 0}</span>
                 </div>
                 <div class="flex flex-col justify-end items-center p-3 bg-gray-800 rounded-lg border-t-4 border-yellow-500 transform scale-105 shadow-2xl">
-                    <span class="text-sm text-yellow-400 font-black">
-🏆 LEADER
-</span>
-                    <span class="font-bold text-base text-yellow-400 truncate w-full">${p1 ? p1.name : '-'}</span>
+                    <span class="text-sm text-yellow-400 font-black">🏆 LEADER</span>
+                    <span class="font-bold text-base text-yellow-400 truncate w-full text-center">${p1 ? p1.name : '-'}</span>
                     <span class="text-2xl font-black text-yellow-400">${p1 ? p1.total : 0}</span>
                 </div>
                 <div class="flex flex-col justify-end items-center p-2 bg-gray-800 rounded-lg border-t-4 border-amber-700 mt-6">
                     <span class="text-xs text-gray-400">#3</span>
-                    <span class="font-bold text-sm text-gray-200 truncate w-full">${p3 ? p3.name : '-'}</span>
+                    <span class="font-bold text-sm text-gray-200 truncate w-full text-center">${p3 ? p3.name : '-'}</span>
                     <span class="text-xl font-extrabold text-amber-600">${p3 ? p3.total : 0}</span>
-                </div>
-            `;
+                </div>`;
         }
 
-        const btnTv = document.getElementById('btn-tv');
+        // TV Mode toggle
+        const btnTv    = document.getElementById('btn-tv');
         const container = document.getElementById('app-container');
         btnTv.addEventListener('click', () => {
             container.classList.toggle('tv-mode');
-            if(container.classList.contains('tv-mode')) {
+            if (container.classList.contains('tv-mode')) {
                 btnTv.innerText = "📱 Normal Mode";
-                btnTv.classList.replace('bg-blue-600', 'bg-purple-600');
+                btnTv.classList.replace('bg-blue-600','bg-purple-600');
             } else {
                 btnTv.innerText = "📺 TV Mode";
-                btnTv.classList.replace('bg-purple-600', 'bg-blue-600');
+                btnTv.classList.replace('bg-purple-600','bg-blue-600');
             }
         });
     </script>
