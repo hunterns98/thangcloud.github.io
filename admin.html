@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flip 7 Scoreboard - Admin Control </title>
+    <title>Flip 7 Scoreboard - Admin Control V4</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <style>
         input[type=number]::-webkit-inner-spin-button,
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
@@ -47,15 +48,15 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-700 pb-4 mb-6 gap-4">
             <div>
                 <div class="flex items-center gap-3 mb-1">
-                    <h1 class="text-3xl font-black text-red-500 tracking-wide">ADMIN CONTROL </h1>
+                    <h1 class="text-3xl font-black text-red-500 tracking-wide">ADMIN CONTROL V4</h1>
                     <span id="status-badge" class="status-badge status-playing">🔥 ĐANG CHƠI</span>
                 </div>
                 <p class="text-sm text-gray-400">Click trực tiếp vào ô điểm để sửa. Tổng điểm tự tính.</p>
             </div>
             <div class="flex flex-wrap gap-2 w-full md:w-auto">
-                <button id="btn-undo"  class="flex-1 md:flex-initial bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg text-sm transition-all">🥚 Hoàn tác</button>
-                <button id="btn-reset" class="flex-1 md:flex-initial bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition-all">🐣 Trận mới</button>
-                <button id="btn-end-game" class="flex-1 md:flex-initial btn-end-game text-white font-black py-2 px-5 rounded-lg text-sm shadow-lg">🐔 Kết thúc game</button>
+                <button id="btn-undo"  class="flex-1 md:flex-initial bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg text-sm transition-all">↩️ Hoàn tác</button>
+                <button id="btn-reset" class="flex-1 md:flex-initial bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition-all">🗑️ Trận mới</button>
+                <button id="btn-end-game" class="flex-1 md:flex-initial btn-end-game text-white font-black py-2 px-5 rounded-lg text-sm shadow-lg">🏁 Kết thúc game</button>
             </div>
         </div>
 
@@ -67,6 +68,17 @@
                        class="flex-1 p-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-red-500">
                 <button id="btn-add-player" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-5 rounded-lg transition-colors">Thêm</button>
             </div>
+        </div>
+
+        <!-- Import / Export Excel -->
+        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 mb-6">
+            <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Import / Export Excel</h3>
+            <div class="flex flex-wrap gap-2">
+                <input type="file" id="excel-file-input" accept=".xlsx,.xls" class="hidden">
+                <button id="btn-import-excel" class="flex-1 md:flex-initial bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-5 rounded-lg text-sm transition-colors">📥 Import Excel</button>
+                <button id="btn-export-excel" class="flex-1 md:flex-initial bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-5 rounded-lg text-sm transition-colors">📤 Export Excel</button>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">File Excel cần có cột "Người chơi" và các cột vòng đặt tên V1, V2, V3...</p>
         </div>
 
         <!-- Score matrix -->
@@ -87,7 +99,7 @@
             </div>
             <div class="p-4 text-right border-t border-gray-700">
                 <button id="btn-save" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-8 rounded-lg text-base shadow-lg transition-all w-full md:w-auto">
-                     CẬP NHẬT ĐIỂM SỐ LÊN LIVE
+                    💾 CẬP NHẬT ĐIỂM SỐ LÊN LIVE
                 </button>
             </div>
         </div>
@@ -170,7 +182,7 @@
                 badge.textContent = "🏁 ĐÃ KẾT THÚC";
                 badge.className = "status-badge status-ended";
             } else {
-                badge.textContent = "🍗 ĐANG CHƠI";
+                badge.textContent = "🔥 ĐANG CHƠI";
                 badge.className = "status-badge status-playing";
             }
         }
@@ -254,11 +266,81 @@
             renderAdminView();
         });
 
+        // ── Import Excel ─────────────────────────────────────────────────────
+        document.getElementById('btn-import-excel').addEventListener('click', () => {
+            document.getElementById('excel-file-input').click();
+        });
+
+        document.getElementById('excel-file-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[firstSheetName];
+                    const rows = XLSX.utils.sheet_to_json(sheet, { defval: 0 });
+
+                    if (!rows.length) { alert("File Excel không có dữ liệu."); return; }
+
+                    // Tìm các cột vòng (bắt đầu bằng "V"), giữ đúng thứ tự V1, V2, V3...
+                    const sampleRow = rows[0];
+                    const roundCols = Object.keys(sampleRow)
+                        .filter(k => /^V\d+$/i.test(String(k).trim()))
+                        .sort((a, b) => parseInt(a.replace(/[^\d]/g,'')) - parseInt(b.replace(/[^\d]/g,'')));
+
+                    if (!roundCols.length) { alert("Không tìm thấy cột vòng (V1, V2, ...) trong file Excel."); return; }
+
+                    const nameKey = Object.keys(sampleRow).find(k => String(k).trim().toLowerCase() === "người chơi")
+                        || Object.keys(sampleRow)[0];
+
+                    const newRounds = roundCols.length;
+                    const newPlayers = rows.map(row => {
+                        const name = String(row[nameKey] ?? '').trim();
+                        const scores = roundCols.map(col => {
+                            const v = parseInt(row[col]);
+                            return isNaN(v) ? 0 : v;
+                        });
+                        // Giữ avatar cũ nếu người chơi đã tồn tại, ngược lại random avatar mới
+                        const existing = gameState.players.find(p => p.name === name);
+                        const avatar = existing && existing.avatar ? existing.avatar : randomAvatar();
+                        return { name, avatar, scores };
+                    }).filter(p => p.name);
+
+                    saveToHistory();
+                    gameState = { ...gameState, rounds: newRounds, players: newPlayers };
+                    renderAdminView();
+                    alert("Import Excel thành công");
+                } catch (err) {
+                    alert("Lỗi đọc file Excel: " + err.message);
+                } finally {
+                    e.target.value = '';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // ── Export Excel ─────────────────────────────────────────────────────
+        document.getElementById('btn-export-excel').addEventListener('click', () => {
+            collectAllInputs();
+            const header = ["Người chơi", ...Array.from({length: gameState.rounds}, (_, i) => `V${i+1}`), "Tổng"];
+            const rows = gameState.players.map(p => {
+                const tot = p.scores.reduce((s, v) => s + (v || 0), 0);
+                return [p.name, ...Array.from({length: gameState.rounds}, (_, i) => p.scores[i] || 0), tot];
+            });
+            const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Bảng điểm");
+            XLSX.writeFile(wb, "flip7-scoreboard.xlsx");
+        });
+
         document.getElementById('btn-save').addEventListener('click', async () => {
             collectAllInputs();
             try {
                 await setDoc(docRef, gameState);
-                alert("Đã đồng bộ bảng điểm lên Live!");
+                alert("🚀 Đã đồng bộ bảng điểm lên Live!");
             } catch(e) { alert("Lỗi: "+e.message); }
         });
 
