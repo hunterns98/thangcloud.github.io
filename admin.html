@@ -111,6 +111,23 @@
         const db     = getFirestore(app);
         const docRef = doc(db,"games","main");
 
+        // ── Avatar pool ──────────────────────────────────────────────────────
+        // Đặt 18 file PNG vào assets/avatars/ với đúng tên trong danh sách này.
+        const AVATAR_LIST = [
+            "wolf.png", "fox.png", "panda.png", "tiger.png", "lion.png",
+            "bear.png", "rabbit.png", "cat.png", "dog.png", "koala.png",
+            "penguin.png", "owl.png", "deer.png", "monkey.png", "elephant.png",
+            "zebra.png", "raccoon.png", "otter.png"
+        ];
+        // Random avatar nhưng tránh trùng với avatar người chơi đang có trong trận.
+        // Nếu đã dùng hết tất cả avatar (>=18 người), sẽ random tự do (có thể trùng).
+        function randomAvatar() {
+            const usedAvatars = gameState.players.map(p => p.avatar).filter(Boolean);
+            const available = AVATAR_LIST.filter(a => !usedAvatars.includes(a));
+            const pool = available.length > 0 ? available : AVATAR_LIST;
+            return pool[Math.floor(Math.random() * pool.length)];
+        }
+
         let gameState    = { rounds:0, players:[], status:"playing" };
         let historyStack = [];
 
@@ -188,7 +205,7 @@
             document.getElementById('current-round-text').innerText = gameState.rounds;
 
             // Header
-            let hHtml = `<th class="py-3 px-4">Người chơi</th>`;
+            let hHtml = `<th class="py-3 px-2 text-center w-14">Avatar</th><th class="py-3 px-4">Người chơi</th>`;
             for (let i=1;i<=gameState.rounds;i++) hHtml += `<th class="py-3 px-2 text-center w-20">V${i}</th>`;
             hHtml += `<th class="py-3 px-4 text-right w-28">Tổng điểm</th>`;
             document.getElementById('admin-table-header').innerHTML = hHtml;
@@ -197,7 +214,12 @@
             let bHtml='';
             gameState.players.forEach((p, pi) => {
                 const tot = p.scores.reduce((s,v)=>s+(v||0),0);
+                const avatarFile = p.avatar || "wolf.png";
                 bHtml += `<tr class="hover:bg-gray-700/50 transition-colors">
+                    <td class="py-2 px-2 text-center">
+                        <img src="assets/avatars/${avatarFile}" onerror="this.onerror=null;this.src='assets/avatars/wolf.png';"
+                             class="w-9 h-9 rounded-full object-cover mx-auto border border-gray-600">
+                    </td>
                     <td class="py-3 px-4 font-bold text-yellow-400 max-w-[150px] truncate">${p.name}</td>`;
                 for (let r=0;r<gameState.rounds;r++) {
                     const val = p.scores[r]!==undefined ? p.scores[r] : '';
@@ -220,7 +242,7 @@
             const inp = document.getElementById('new-player-name');
             const name = inp.value.trim(); if(!name) return;
             saveToHistory(); collectAllInputs();
-            gameState.players.push({ name, scores: Array(gameState.rounds).fill(0) });
+            gameState.players.push({ name, avatar: randomAvatar(), scores: Array(gameState.rounds).fill(0) });
             inp.value='';
             renderAdminView();
         });
