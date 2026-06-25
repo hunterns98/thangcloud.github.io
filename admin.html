@@ -178,13 +178,33 @@
 
         function updateStatusBadge() {
             const badge = document.getElementById('status-badge');
+            const endBtn = document.getElementById('btn-end-game');
             if (gameState.status === "ended") {
                 badge.textContent = "🏁 ĐÃ KẾT THÚC";
                 badge.className = "status-badge status-ended";
+                endBtn.textContent = "▶️ Mở lại game";
             } else {
                 badge.textContent = "🔥 ĐANG CHƠI";
                 badge.className = "status-badge status-playing";
+                endBtn.textContent = "🏁 Kết thúc game";
             }
+        }
+
+        // Tự động kết thúc game nếu có người chơi đạt mốc 200 điểm.
+        // Gọi hàm này SAU khi collectAllInputs() đã cập nhật điểm mới nhất vào gameState.
+        // Trả về true nếu game vừa được tự động kết thúc (để báo cho người dùng biết).
+        const SCORE_GOAL = 200;
+        function checkAutoEndGame() {
+            if (gameState.status === "ended") return false;
+            const hasWinner = gameState.players.some(p => {
+                const tot = p.scores.reduce((s, v) => s + (v || 0), 0);
+                return tot >= SCORE_GOAL;
+            });
+            if (hasWinner) {
+                gameState.status = "ended";
+                return true;
+            }
+            return false;
         }
 
         function saveToHistory() {
@@ -312,7 +332,10 @@
                     saveToHistory();
                     gameState = { ...gameState, rounds: newRounds, players: newPlayers };
                     renderAdminView();
-                    alert("Import Excel thành công");
+                    const hasWinnerAlready = newPlayers.some(p => p.scores.reduce((s,v)=>s+(v||0),0) >= SCORE_GOAL);
+                    alert(hasWinnerAlready
+                        ? "Import Excel thành công. Lưu ý: có người chơi đã đạt ≥200 điểm — bấm 💾 Cập nhật lên Live để tự động kết thúc game."
+                        : "Import Excel thành công");
                 } catch (err) {
                     alert("Lỗi đọc file Excel: " + err.message);
                 } finally {
@@ -338,9 +361,15 @@
 
         document.getElementById('btn-save').addEventListener('click', async () => {
             collectAllInputs();
+            const autoEnded = checkAutoEndGame();
             try {
                 await setDoc(docRef, gameState);
-                alert("🚀 Đã đồng bộ bảng điểm lên Live!");
+                updateStatusBadge();
+                if (autoEnded) {
+                    alert("🏆 Có người đạt mốc 200 điểm! Game đã tự động kết thúc. Viewer đang xem Winner Screen.");
+                } else {
+                    alert("🚀 Đã đồng bộ bảng điểm lên Live!");
+                }
             } catch(e) { alert("Lỗi: "+e.message); }
         });
 
@@ -374,8 +403,6 @@
             try {
                 await setDoc(docRef, gameState);
                 updateStatusBadge();
-                const btn = document.getElementById('btn-end-game');
-                btn.textContent = isEnded ? "🏁 Kết thúc game" : "▶️ Mở lại game";
                 alert(isEnded ? "Game đã mở lại!" : "🏁 Game đã kết thúc! Viewer đang xem Winner Screen.");
             } catch(e) { alert("Lỗi: "+e.message); }
         });
