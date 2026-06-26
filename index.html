@@ -321,13 +321,13 @@
     <div id="winner-screen">
         <canvas id="confetti-canvas" style="position:absolute;inset:0;pointer-events:none;"></canvas>
         <div id="winner-content">
-            <p class="winner-title">🎲 FLIP 7 · GAME OVER</p>
+            <p class="winner-title">FLIP 7 · GAME OVER</p>
             <div id="ws-avatars" class="flex items-center justify-center gap-4 mb-2"></div>
             <div class="winner-crown">👑</div>
             <p class="winner-title" style="letter-spacing:.15em;color:#fbbf24;font-size:1.1rem;">CHAMPION</p>
             <div class="winner-name" id="ws-name">—</div>
             <div class="winner-score" id="ws-score">0 POINTS</div>
-            <div class="winner-sub">🎲 FLIP 7 WINNER</div>
+            <div class="winner-sub"> FLIP 7 WINNER</div>
 
             <!-- Co-winner -->
             <div id="ws-cowinner" class="hidden mb-4 text-purple-300 font-bold text-sm tracking-wide"></div>
@@ -348,7 +348,7 @@
 
     <!-- Share card (off-screen, for html2canvas) -->
     <div id="share-card">
-        <div style="font-size:1.4rem;font-weight:900;color:#a5b4fc;letter-spacing:.2em;margin-bottom:16px;">🎲 FLIP 7 NIGHT</div>
+        <div style="font-size:1.4rem;font-weight:900;color:#a5b4fc;letter-spacing:.2em;margin-bottom:16px;"> FLIP 7 NIGHT</div>
         <div style="font-size:.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:.15em;margin-bottom:4px;">Winner</div>
         <div id="sc-name"  style="font-size:2.4rem;font-weight:900;color:#fbbf24;margin-bottom:4px;"></div>
         <div id="sc-score" style="font-size:1.4rem;font-weight:900;color:#6ee7b7;margin-bottom:16px;"></div>
@@ -366,7 +366,7 @@
         <!-- Header -->
         <div class="flex flex-col items-center mb-4 text-center">
             <img src="assets/logo.png" class="w-32 md:w-48 mb-4 drop-shadow-2xl">
-            <h1 class="text-3xl md:text-6xl font-black text-yellow-400 tracking-widest">🎲 FLIP 7 LIVE</h1>
+            <h1 class="text-3xl md:text-6xl font-black text-yellow-400 tracking-widest"> FLIP 7 SCOREBOARD</h1>
             <button id="btn-tv"
                 class="mt-5 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all">
                 📺 TV Mode
@@ -377,7 +377,7 @@
         <div id="round-banner">
             <div class="divider"></div>
             <div class="round-title" id="round-title-text">ROUND —</div>
-            <div class="round-status">🔥 ĐANG THI ĐẤU</div>
+            <div class="round-status"> ĐANG DIỄN RA</div>
             <div class="divider"></div>
         </div>
 
@@ -545,7 +545,7 @@
             if(!isEnded) document.getElementById('winner-screen').classList.remove('show');
 
             // Round banner
-            document.getElementById('round-title-text').textContent=`🎲 ROUND ${totalRounds}`;
+            document.getElementById('round-title-text').textContent=` ROUND ${totalRounds}`;
 
             // New round toast
             if(!firstLoad && totalRounds > prevRounds){
@@ -833,6 +833,9 @@
             "⚡ Kìn chá nà. Kìn chá nề yố.",
             "🔥 Lửa hận thù đốt cháy ký ức hai ta.",
             "🃏 Có vẻ bộ bài đang thiên vị ai đó.",
+            "🌙 Đi đi em, do dự trời tối mất.",
+            "💦 Ai rồi cũng khát.",
+            "🤔❓ Anh khạc hay em khạc.",
             "🤤 Doki Doki, Fuwa Fuwa, Oishikunare, Moe Moe Kun.",
             "😎 Đen tình đỏ bạc. Bạn đen cả hai.",
             "❤️‍🩹 Là do em hiểu lầm! Cứ tưởng mình là love, ai ngờ đâu là lốp.",
@@ -843,6 +846,7 @@
             "🦑 2, 3 con mực. Yêu em căng cực.",
             "🐟 Sẽ có những con cá phải giả chó.",
             "🖤🩷 Hồng Đen trong khu vực bạn đóoooo.",
+            "🚨 Đi cả e kíp rồi ông giáo ạ.",
             "🐶 Trust me I'm a Dogtor."
         ];
         let lastCommentIdx=-1;
