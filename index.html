@@ -539,12 +539,10 @@
                 .map(p=>({...p,total:p.scores.reduce((s,v)=>s+(v||0),0)}))
                 .sort((a,b)=>b.total-a.total);
 
-            // Winner screen
-            if(status==="ended" && sorted.length>0){
-                showWinnerScreen(sorted, totalRounds);
-                return;
-            }
-            document.getElementById('winner-screen').classList.remove('show');
+            // Winner screen sẽ được hiển thị ở CUỐI hàm (sau khi đã render xong bảng điểm),
+            // để khi viewer bấm "Xem bảng điểm" thoát Winner Screen, dữ liệu vẫn là vòng cuối mới nhất.
+            const isEnded = status==="ended";
+            if(!isEnded) document.getElementById('winner-screen').classList.remove('show');
 
             // Round banner
             document.getElementById('round-title-text').textContent=`🎲 ROUND ${totalRounds}`;
@@ -609,6 +607,11 @@
             renderPodium(sorted);
             renderPlayerCards(sorted, totalRounds, changedRows);
             leaderJustChanged=false;
+
+            // Hiển thị Winner Screen SAU CÙNG, khi bảng điểm phía dưới đã có dữ liệu vòng cuối mới nhất.
+            if(isEnded && sorted.length>0){
+                showWinnerScreen(sorted, totalRounds);
+            }
         }
 
         // ── Hot Player ────────────────────────────────────────────────────────
