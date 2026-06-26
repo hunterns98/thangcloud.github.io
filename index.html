@@ -6,6 +6,7 @@
     <title>Flip 7 Live Scoreboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; }
 
@@ -298,8 +299,67 @@
             font-size:.65rem; color:#6b7280; margin-bottom:4px;
             letter-spacing:.1em; text-transform:uppercase;
         }
+
+        /* ===== QR invite floating button + popup ===== */
+        #qr-fab {
+            position:fixed; bottom:18px; left:18px; z-index:998;
+            width:52px; height:52px; border-radius:50%;
+            background:linear-gradient(135deg,#7c3aed,#db2777);
+            display:flex; align-items:center; justify-content:center;
+            font-size:1.4rem; cursor:pointer; border:none;
+            box-shadow:0 8px 24px rgba(124,58,237,.5);
+            transition:transform .25s, box-shadow .25s;
+        }
+        #qr-fab:hover { transform:scale(1.08); box-shadow:0 10px 30px rgba(124,58,237,.7); }
+        #qr-fab:active { transform:scale(.95); }
+
+        #qr-popup-overlay {
+            position:fixed; inset:0; z-index:1500;
+            background:rgba(8,3,20,.82); backdrop-filter:blur(4px);
+            display:none; align-items:center; justify-content:center;
+            padding:20px;
+        }
+        #qr-popup-overlay.show { display:flex; }
+        #qr-popup-card {
+            background:linear-gradient(165deg,rgba(36,20,84,.95),rgba(13,0,32,.97));
+            border:1px solid rgba(251,191,36,.35);
+            border-radius:24px; padding:28px 26px 24px;
+            max-width:320px; width:100%; text-align:center;
+            box-shadow:0 30px 70px rgba(0,0,0,.6);
+            animation:qrPopIn .35s cubic-bezier(.2,.8,.2,1);
+            position:relative;
+        }
+        @keyframes qrPopIn { from{opacity:0;transform:scale(.92) translateY(10px);} to{opacity:1;transform:scale(1) translateY(0);} }
+        #qr-popup-close {
+            position:absolute; top:12px; right:14px;
+            background:none; border:none; color:#9ca3af;
+            font-size:1.3rem; cursor:pointer; line-height:1;
+        }
+        #qr-popup-close:hover { color:#fff; }
+        #qr-popup-eyebrow {
+            font-size:.66rem; font-weight:800; letter-spacing:.2em;
+            text-transform:uppercase; color:#a5b4fc; margin-bottom:8px;
+        }
+        #qr-popup-title {
+            font-size:1.3rem; font-weight:900; color:#fbbf24;
+            margin:0 0 16px; text-shadow:0 0 24px rgba(251,191,36,.35);
+        }
+        #qr-popup-code {
+            width:188px; height:188px; margin:0 auto 16px;
+            background:#f4ecff; border-radius:16px;
+            display:flex; align-items:center; justify-content:center;
+            box-shadow:0 0 0 3px #0d0020, 0 0 0 6px rgba(251,191,36,.55);
+        }
+        #qr-popup-code img, #qr-popup-code canvas { border-radius:8px; }
+        #qr-popup-link {
+            font-family:"SFMono-Regular",Consolas,Menlo,monospace;
+            font-size:.72rem; color:#fde68a; word-break:break-all;
+            background:rgba(255,255,255,.06); border-radius:10px;
+            padding:8px 12px; margin-bottom:6px;
+        }
     </style>
 </head>
+
 <body class="text-gray-100 min-h-screen bg-cover bg-center bg-fixed"
       style="background-image:linear-gradient(rgba(0,0,0,.65),rgba(0,0,0,.65)),url('assets/background.jpg');">
 
@@ -317,17 +377,30 @@
         </div>
     </div>
 
+    <!-- QR invite floating button -->
+    <button id="qr-fab" title="Mời bạn bè xem bảng điểm">📱</button>
+
+    <div id="qr-popup-overlay">
+        <div id="qr-popup-card">
+            <button id="qr-popup-close" aria-label="Đóng">✕</button>
+            <p id="qr-popup-eyebrow">🎲 Flip 7 Live</p>
+            <p id="qr-popup-title">Quét để xem bảng điểm</p>
+            <div id="qr-popup-code"></div>
+            <div id="qr-popup-link"></div>
+        </div>
+    </div>
+
     <!-- ===== WINNER SCREEN ===== -->
     <div id="winner-screen">
         <canvas id="confetti-canvas" style="position:absolute;inset:0;pointer-events:none;"></canvas>
         <div id="winner-content">
-            <p class="winner-title">FLIP 7 · GAME OVER</p>
+            <p class="winner-title">🎲 FLIP 7 · GAME OVER</p>
             <div id="ws-avatars" class="flex items-center justify-center gap-4 mb-2"></div>
             <div class="winner-crown">👑</div>
             <p class="winner-title" style="letter-spacing:.15em;color:#fbbf24;font-size:1.1rem;">CHAMPION</p>
             <div class="winner-name" id="ws-name">—</div>
             <div class="winner-score" id="ws-score">0 POINTS</div>
-            <div class="winner-sub"> FLIP 7 WINNER</div>
+            <div class="winner-sub">🎲 FLIP 7 WINNER</div>
 
             <!-- Co-winner -->
             <div id="ws-cowinner" class="hidden mb-4 text-purple-300 font-bold text-sm tracking-wide"></div>
@@ -348,7 +421,7 @@
 
     <!-- Share card (off-screen, for html2canvas) -->
     <div id="share-card">
-        <div style="font-size:1.4rem;font-weight:900;color:#a5b4fc;letter-spacing:.2em;margin-bottom:16px;"> FLIP 7 NIGHT</div>
+        <div style="font-size:1.4rem;font-weight:900;color:#a5b4fc;letter-spacing:.2em;margin-bottom:16px;">🎲 FLIP 7 NIGHT</div>
         <div style="font-size:.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:.15em;margin-bottom:4px;">Winner</div>
         <div id="sc-name"  style="font-size:2.4rem;font-weight:900;color:#fbbf24;margin-bottom:4px;"></div>
         <div id="sc-score" style="font-size:1.4rem;font-weight:900;color:#6ee7b7;margin-bottom:16px;"></div>
@@ -366,7 +439,7 @@
         <!-- Header -->
         <div class="flex flex-col items-center mb-4 text-center">
             <img src="assets/logo.png" class="w-32 md:w-48 mb-4 drop-shadow-2xl">
-            <h1 class="text-3xl md:text-6xl font-black text-yellow-400 tracking-widest"> FLIP 7 SCOREBOARD</h1>
+            <h1 class="text-3xl md:text-6xl font-black text-yellow-400 tracking-widest">🎲 FLIP 7 LIVE</h1>
             <button id="btn-tv"
                 class="mt-5 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all">
                 📺 TV Mode
@@ -377,7 +450,7 @@
         <div id="round-banner">
             <div class="divider"></div>
             <div class="round-title" id="round-title-text">ROUND —</div>
-            <div class="round-status"> ĐANG DIỄN RA</div>
+            <div class="round-status">🔥 ĐANG THI ĐẤU</div>
             <div class="divider"></div>
         </div>
 
@@ -545,7 +618,7 @@
             if(!isEnded) document.getElementById('winner-screen').classList.remove('show');
 
             // Round banner
-            document.getElementById('round-title-text').textContent=` ROUND ${totalRounds}`;
+            document.getElementById('round-title-text').textContent=`🎲 ROUND ${totalRounds}`;
 
             // New round toast
             if(!firstLoad && totalRounds > prevRounds){
@@ -833,9 +906,6 @@
             "⚡ Kìn chá nà. Kìn chá nề yố.",
             "🔥 Lửa hận thù đốt cháy ký ức hai ta.",
             "🃏 Có vẻ bộ bài đang thiên vị ai đó.",
-            "🌙 Đi đi em, do dự trời tối mất.",
-            "💦 Ai rồi cũng khát.",
-            "🤔❓ Anh khạc hay em khạc.",
             "🤤 Doki Doki, Fuwa Fuwa, Oishikunare, Moe Moe Kun.",
             "😎 Đen tình đỏ bạc. Bạn đen cả hai.",
             "❤️‍🩹 Là do em hiểu lầm! Cứ tưởng mình là love, ai ngờ đâu là lốp.",
@@ -846,7 +916,6 @@
             "🦑 2, 3 con mực. Yêu em căng cực.",
             "🐟 Sẽ có những con cá phải giả chó.",
             "🖤🩷 Hồng Đen trong khu vực bạn đóoooo.",
-            "🚨 Đi cả e kíp rồi ông giáo ạ.",
             "🐶 Trust me I'm a Dogtor."
         ];
         let lastCommentIdx=-1;
@@ -869,6 +938,35 @@
         }
         // Show every 10s, first one after 5s
         setTimeout(()=>{ showComment(); setInterval(showComment,10000); },5000);
+
+        // ── QR invite widget ─────────────────────────────────────────────────
+        const SHARE_URL = "https://hunterns98.github.io/thangcloud.github.io/";
+        let qrRendered = false;
+        function ensureQrRendered(){
+            if(qrRendered) return;
+            new QRCode(document.getElementById('qr-popup-code'), {
+                text: SHARE_URL,
+                width: 168,
+                height: 168,
+                colorDark: "#1a0a3b",
+                colorLight: "#f4ecff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            document.getElementById('qr-popup-link').textContent =
+                SHARE_URL.replace(/^https?:\/\//,'').replace(/\/$/,'');
+            qrRendered = true;
+        }
+        const qrOverlay = document.getElementById('qr-popup-overlay');
+        document.getElementById('qr-fab').addEventListener('click', ()=>{
+            ensureQrRendered();
+            qrOverlay.classList.add('show');
+        });
+        document.getElementById('qr-popup-close').addEventListener('click', ()=>{
+            qrOverlay.classList.remove('show');
+        });
+        qrOverlay.addEventListener('click', (e)=>{
+            if(e.target===qrOverlay) qrOverlay.classList.remove('show');
+        });
 
         // ── TV Mode ───────────────────────────────────────────────────────────
         const btnTv=document.getElementById('btn-tv');
