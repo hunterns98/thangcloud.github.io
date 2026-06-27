@@ -367,7 +367,7 @@
     <div id="toast-container"></div>
 
     <!-- Signature -->
-    <div id="signature">From Thắng with <span class="heart">♥</span><span class="heart">♥</span><span class="heart">♥</span></div>
+    <div id="signature">Made from Thắng with <span class="heart">♥</span><span class="heart">♥</span><span class="heart">♥</span></div>
 
     <!-- Commentator -->
     <div id="commentator">
@@ -383,7 +383,7 @@
     <div id="qr-popup-overlay">
         <div id="qr-popup-card">
             <button id="qr-popup-close" aria-label="Đóng">✕</button>
-            <p id="qr-popup-eyebrow">SCOREBOARD</p>
+            <p id="qr-popup-eyebrow">🎲 Flip 7 Live</p>
             <p id="qr-popup-title">Quét để xem bảng điểm</p>
             <div id="qr-popup-code"></div>
             <div id="qr-popup-link"></div>
@@ -430,7 +430,7 @@
         <div id="sc-players" style="font-size:1.6rem;font-weight:900;color:#e5e7eb;margin-bottom:16px;"></div>
         <div style="font-size:.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:.15em;margin-bottom:4px;">Total Rounds</div>
         <div id="sc-rounds"  style="font-size:1.6rem;font-weight:900;color:#e5e7eb;margin-bottom:20px;"></div>
-        <div style="font-size:.7rem;color:#4b5563;">flip7</div>
+        <div style="font-size:.7rem;color:#4b5563;">Made from Thắng with ♥ · flip7live</div>
     </div>
 
     <!-- ===== MAIN APP ===== -->
@@ -439,7 +439,7 @@
         <!-- Header -->
         <div class="flex flex-col items-center mb-4 text-center">
             <img src="assets/logo.png" class="w-32 md:w-48 mb-4 drop-shadow-2xl">
-            <h1 class="text-3xl md:text-6xl font-black text-yellow-400 tracking-widest">SCOREBOARD</h1>
+            <h1 class="text-3xl md:text-6xl font-black text-yellow-400 tracking-widest">🎲 FLIP 7 LIVE</h1>
             <button id="btn-tv"
                 class="mt-5 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all">
                 📺 TV Mode
@@ -450,7 +450,7 @@
         <div id="round-banner">
             <div class="divider"></div>
             <div class="round-title" id="round-title-text">ROUND —</div>
-            <div class="round-status">ĐANG DIỄN RA</div>
+            <div class="round-status">🔥 ĐANG THI ĐẤU</div>
             <div class="divider"></div>
         </div>
 
@@ -618,7 +618,7 @@
             if(!isEnded) document.getElementById('winner-screen').classList.remove('show');
 
             // Round banner
-            document.getElementById('round-title-text').textContent=` ROUND ${totalRounds}`;
+            document.getElementById('round-title-text').textContent=`🎲 ROUND ${totalRounds}`;
 
             // New round toast
             if(!firstLoad && totalRounds > prevRounds){
@@ -897,7 +897,7 @@
 
         // ── Auto Commentator ──────────────────────────────────────────────────
         const COMMENTS=[
-            "🤬 Đầu 3 tổng 9. VAR rồi VAR rồi.",
+            "🤬 Để mai làm.",
             "🍚 Em ăn cơm chưa? Mà sao yếu thế.",
             "👀 Hợp đồng kỳ nghỉ không em?",
             "🚨 Cố lên cố lên, sắp tới rồi sắp tới rồi.",
@@ -908,24 +908,45 @@
             "🃏 Có vẻ bộ bài đang thiên vị ai đó.",
             "🤤 Doki Doki, Fuwa Fuwa, Oishikunare, Moe Moe Kun.",
             "😎 Đen tình đỏ bạc. Bạn đen cả hai.",
+            "😮‍💨 Một ngày thật tuyệt, tuyệt vọng!",
+            "😶‍🌫️ Họ cười tôi vì tôi khác họ. Tôi cười họ thì họ đấm tôi.",
             "❤️‍🩹 Là do em hiểu lầm! Cứ tưởng mình là love, ai ngờ đâu là lốp.",
             "🤔 Ủa em?",
             "😂 Hư quá. Anh phạt đấy.",
+            "🚓 Của rẻ là của congan.",
             "👑 Đừng cúi đầu, vương miện sẽ rơi.",
             "🙀 Sống Nay Stress Mai.",
             "🦑 2, 3 con mực. Yêu em căng cực.",
             "🐟 Sẽ có những con cá phải giả chó.",
             "🖤🩷 Hồng Đen trong khu vực bạn đóoooo.",
+            "🤡 1 điều nhịn là 9 đứa ngồi lên đầu.",
             "🐶 Trust me I'm a Dogtor."
         ];
-        let lastCommentIdx=-1;
+        // Bag-shuffle: xáo trộn toàn bộ danh sách quote, chạy hết "túi" rồi mới xáo lại,
+        // đảm bảo không câu nào lặp lại sớm trong cùng 1 vòng (khác với random thuần dễ bị trúng lại liên tục).
+        let commentBag=[];
+        let lastShownIdx=-1;
+        function refillCommentBag(){
+            commentBag=COMMENTS.map((_,i)=>i);
+            for(let i=commentBag.length-1;i>0;i--){
+                const j=Math.floor(Math.random()*(i+1));
+                [commentBag[i],commentBag[j]]=[commentBag[j],commentBag[i]];
+            }
+            // Tránh trường hợp câu cuối túi cũ trùng câu đầu túi mới (sẽ bị lặp 2 lần liên tiếp ở điểm nối)
+            if(commentBag[commentBag.length-1]===lastShownIdx && commentBag.length>1){
+                [commentBag[commentBag.length-1], commentBag[0]] = [commentBag[0], commentBag[commentBag.length-1]];
+            }
+        }
+        function nextCommentIdx(){
+            if(commentBag.length===0) refillCommentBag();
+            const idx=commentBag.pop();
+            lastShownIdx=idx;
+            return idx;
+        }
         function showComment(){
             const bubble=document.getElementById('commentator-bubble');
             const text=document.getElementById('commentator-text');
-            // pick a random comment, avoid repeating last one
-            let idx;
-            do { idx=Math.floor(Math.random()*COMMENTS.length); } while(idx===lastCommentIdx);
-            lastCommentIdx=idx;
+            const idx=nextCommentIdx();
             text.textContent=COMMENTS[idx];
             bubble.style.display='block';
             bubble.classList.remove('hide');
