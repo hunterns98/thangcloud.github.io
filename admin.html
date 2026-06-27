@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flip 7 Scoreboard - Admin Control V4</title>
+    <title>Flip 7 Scoreboard - QUẢN TRÒ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <style>
@@ -48,8 +48,8 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-700 pb-4 mb-6 gap-4">
             <div>
                 <div class="flex items-center gap-3 mb-1">
-                    <h1 class="text-3xl font-black text-red-500 tracking-wide">ADMIN CONTROL V4</h1>
-                    <span id="status-badge" class="status-badge status-playing">🔥 ĐANG CHƠI</span>
+                    <h1 class="text-3xl font-black text-red-500 tracking-wide">QUẢN TRÒ</h1>
+                    <span id="status-badge" class="status-badge status-playing">GAME ĐANG DIỄN RA</span>
                 </div>
                 <p class="text-sm text-gray-400">Click trực tiếp vào ô điểm để sửa. Tổng điểm tự tính.</p>
             </div>
@@ -169,7 +169,7 @@
                         while(p.scores.length < gameState.rounds) p.scores.push(0);
                     });
                 } else {
-                    gameState = { rounds:1, players:[], status:"playing" };
+                    gameState = { rounds:1, players:[], status:"playing" };	
                     await setDoc(docRef, gameState);
                 }
                 renderAdminView();
@@ -185,7 +185,7 @@
                 badge.className = "status-badge status-ended";
                 endBtn.textContent = "▶️ Mở lại game";
             } else {
-                badge.textContent = "🔥 ĐANG CHƠI";
+                badge.textContent = "GAME ĐANG DIỄN RA";
                 badge.className = "status-badge status-playing";
                 endBtn.textContent = "🏁 Kết thúc game";
             }
