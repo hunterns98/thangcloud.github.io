@@ -198,16 +198,6 @@
         /* Total score count-up flash */
         .pc-total.count-flash { animation:scoreFlash 1.2s ease forwards; border-radius:8px; }
 
-        /* ===== TV Mode ===== */
-        .tv-mode               { font-size:1.7rem; }
-        .tv-mode h1            { font-size:4rem; }
-        .tv-mode .player-card  { padding:22px 26px; gap:20px; }
-        .tv-mode .pc-avatar    { width:72px; height:72px; }
-        .tv-mode .pc-rank      { flex-basis:42px; height:42px; font-size:1.1rem; }
-        .tv-mode .pc-name      { font-size:1.6rem; }
-        .tv-mode .pc-round-chip{ font-size:1rem; padding:4px 10px; }
-        .tv-mode .pc-total     { font-size:2.2rem; min-width:90px; }
-
         /* ===== Winner Screen overlay ===== */
         #winner-screen {
             display:none; position:fixed; inset:0; z-index:8888;
@@ -357,6 +347,34 @@
             background:rgba(255,255,255,.06); border-radius:10px;
             padding:8px 12px; margin-bottom:6px;
         }
+
+        /* ===== Heart button (floating, bottom-right) ===== */
+        #heart-fab {
+            position:fixed; bottom:18px; right:18px; z-index:998;
+            width:56px; height:56px; border-radius:50%;
+            background:linear-gradient(135deg,#ef4444,#ec4899);
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            border:none; cursor:pointer; overflow:visible;
+            box-shadow:0 8px 24px rgba(236,72,153,.5);
+            transition:transform .15s;
+        }
+        #heart-fab:active { transform:scale(.88); }
+        #heart-fab .heart-icon { font-size:1.5rem; line-height:1; pointer-events:none; }
+        #heart-fab .heart-count {
+            font-size:.6rem; font-weight:800; color:#fff;
+            line-height:1; margin-top:1px; pointer-events:none;
+        }
+
+        @keyframes heartFlyUp {
+            0%   { transform:translate(-50%,0) scale(.6) rotate(0deg); opacity:1; }
+            70%  { opacity:1; }
+            100% { transform:translate(calc(-50% + var(--drift,0px)),-160px) scale(1.15) rotate(var(--rot,12deg)); opacity:0; }
+        }
+        .flying-heart {
+            position:fixed; left:50%; bottom:74px; z-index:997;
+            font-size:1.6rem; pointer-events:none;
+            animation:heartFlyUp 1.4s ease-out forwards;
+        }
     </style>
 </head>
 
@@ -367,7 +385,7 @@
     <div id="toast-container"></div>
 
     <!-- Signature -->
-    <div id="signature">From Thắng with <span class="heart">♥</span><span class="heart">♥</span><span class="heart">♥</span></div>
+    <div id="signature">Made from Thắng with <span class="heart">♥</span><span class="heart">♥</span><span class="heart">♥</span></div>
 
     <!-- Commentator -->
     <div id="commentator">
@@ -383,12 +401,18 @@
     <div id="qr-popup-overlay">
         <div id="qr-popup-card">
             <button id="qr-popup-close" aria-label="Đóng">✕</button>
-            <p id="qr-popup-eyebrow">BẢNG ĐIỂM ONLINE</p>
+            <p id="qr-popup-eyebrow">🎲 Flip 7 Live</p>
             <p id="qr-popup-title">Quét để xem bảng điểm</p>
             <div id="qr-popup-code"></div>
             <div id="qr-popup-link"></div>
         </div>
     </div>
+
+    <!-- Heart reaction button -->
+    <button id="heart-fab" title="Gửi tim">
+        <span class="heart-icon">❤️</span>
+        <span class="heart-count" id="heart-count">0</span>
+    </button>
 
     <!-- ===== WINNER SCREEN ===== -->
     <div id="winner-screen">
@@ -421,7 +445,7 @@
 
     <!-- Share card (off-screen, for html2canvas) -->
     <div id="share-card">
-        <div style="font-size:1.4rem;font-weight:900;color:#a5b4fc;letter-spacing:.2em;margin-bottom:16px;">FLIP 7</div>
+        <div style="font-size:1.4rem;font-weight:900;color:#a5b4fc;letter-spacing:.2em;margin-bottom:16px;">🎲 FLIP 7 NIGHT</div>
         <div style="font-size:.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:.15em;margin-bottom:4px;">Winner</div>
         <div id="sc-name"  style="font-size:2.4rem;font-weight:900;color:#fbbf24;margin-bottom:4px;"></div>
         <div id="sc-score" style="font-size:1.4rem;font-weight:900;color:#6ee7b7;margin-bottom:16px;"></div>
@@ -430,7 +454,7 @@
         <div id="sc-players" style="font-size:1.6rem;font-weight:900;color:#e5e7eb;margin-bottom:16px;"></div>
         <div style="font-size:.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:.15em;margin-bottom:4px;">Total Rounds</div>
         <div id="sc-rounds"  style="font-size:1.6rem;font-weight:900;color:#e5e7eb;margin-bottom:20px;"></div>
-        <div style="font-size:.7rem;color:#4b5563;">From Thắng with ♥ · flip7</div>
+        <div style="font-size:.7rem;color:#4b5563;">Made from Thắng with ♥ · flip7live</div>
     </div>
 
     <!-- ===== MAIN APP ===== -->
@@ -439,18 +463,14 @@
         <!-- Header -->
         <div class="flex flex-col items-center mb-4 text-center">
             <img src="assets/logo.png" class="w-32 md:w-48 mb-4 drop-shadow-2xl">
-            <h1 class="text-3xl md:text-6xl font-black text-yellow-400 tracking-widest">BẢNG ĐIỂM ONLINE</h1>
-            <button id="btn-tv"
-                class="mt-5 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all">
-                📺 TV Mode
-            </button>
+            <h1 class="text-3xl md:text-6xl font-black text-yellow-400 tracking-widest">🎲 FLIP 7 LIVE</h1>
         </div>
 
         <!-- Round banner -->
         <div id="round-banner">
             <div class="divider"></div>
             <div class="round-title" id="round-title-text">ROUND —</div>
-            <div class="round-status">ĐANG DIỄN RA</div>
+            <div class="round-status">🔥 ĐANG THI ĐẤU</div>
             <div class="divider"></div>
         </div>
 
@@ -492,7 +512,7 @@
     <!-- ===== FIREBASE + LOGIC ===== -->
     <script type="module">
         import { initializeApp }          from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey:"AIzaSyDUTKQK4mUKMBc-f8cnu-JAEhQ5XHZeg-E",
@@ -618,7 +638,7 @@
             if(!isEnded) document.getElementById('winner-screen').classList.remove('show');
 
             // Round banner
-            document.getElementById('round-title-text').textContent=`VÒNG ${totalRounds}`;
+            document.getElementById('round-title-text').textContent=`🎲 ROUND ${totalRounds}`;
 
             // New round toast
             if(!firstLoad && totalRounds > prevRounds){
@@ -989,19 +1009,54 @@
             if(e.target===qrOverlay) qrOverlay.classList.remove('show');
         });
 
-        // ── TV Mode ───────────────────────────────────────────────────────────
-        const btnTv=document.getElementById('btn-tv');
-        const container=document.getElementById('app-container');
-        btnTv.addEventListener('click',()=>{
-            container.classList.toggle('tv-mode');
-            if(container.classList.contains('tv-mode')){
-                btnTv.textContent='📱 Normal Mode';
-                btnTv.classList.replace('bg-blue-600','bg-purple-600');
-            } else {
-                btnTv.textContent='📺 TV Mode';
-                btnTv.classList.replace('bg-purple-600','bg-blue-600');
+        // ── Heart reaction (tách riêng khỏi games/main, không đụng bảng điểm) ───
+        const interactionsRef = doc(db,"games","interactions");
+        const heartCountEl = document.getElementById('heart-count');
+        const heartFab = document.getElementById('heart-fab');
+
+        function formatHeartCount(n){
+            if(n>=1000000) return (n/1000000).toFixed(1).replace(/\.0$/,'')+'M';
+            if(n>=1000)    return (n/1000).toFixed(1).replace(/\.0$/,'')+'K';
+            return String(n);
+        }
+
+        let lastKnownHearts=0;
+        onSnapshot(interactionsRef,(snap)=>{
+            const n = snap.exists() ? (snap.data().hearts||0) : 0;
+            heartCountEl.textContent = formatHeartCount(n);
+            // Nếu số tim tăng do người KHÁC bấm (không phải do chính mình vừa click),
+            // vẫn bay 1 tim nhẹ để cảm nhận có người vừa thích — nhưng tránh bay đôi với click của chính mình.
+            if(n>lastKnownHearts && !heartFab._justClicked){
+                spawnFlyingHeart();
+            }
+            lastKnownHearts = n;
+            heartFab._justClicked = false;
+        });
+
+        function spawnFlyingHeart(){
+            const heart=document.createElement('div');
+            heart.className='flying-heart';
+            heart.textContent='❤️';
+            heart.style.setProperty('--drift', (Math.random()*60-30)+'px');
+            heart.style.setProperty('--rot', (Math.random()*40-20)+'deg');
+            document.body.appendChild(heart);
+            setTimeout(()=>heart.remove(),1500);
+        }
+
+        heartFab.addEventListener('click', async ()=>{
+            spawnFlyingHeart();
+            heartFab._justClicked = true;
+            heartFab.style.transform='scale(1.15)';
+            setTimeout(()=>{ heartFab.style.transform=''; },150);
+            try {
+                await setDoc(interactionsRef, { hearts: increment(1) }, { merge:true });
+            } catch(e){
+                // Nếu document chưa tồn tại lần đầu, increment() trên setDoc với merge vẫn tạo được field số;
+                // nếu vẫn lỗi (mất mạng...), bỏ qua êm, không làm phiền người xem bằng alert.
+                console.warn('Không gửi được tim:', e.message);
             }
         });
+
     </script>
 </body>
 </html>
