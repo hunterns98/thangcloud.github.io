@@ -410,7 +410,7 @@
 
     <!-- Heart reaction button -->
     <button id="heart-fab" title="Gửi tim">
-        <span class="heart-icon">❤️</span>
+        <span class="heart-icon">💔</span>
         <span class="heart-count" id="heart-count">0</span>
     </button>
 
@@ -1036,7 +1036,7 @@
         function spawnFlyingHeart(){
             const heart=document.createElement('div');
             heart.className='flying-heart';
-            heart.textContent='❤️';
+            heart.textContent='💔';
             heart.style.setProperty('--drift', (Math.random()*60-30)+'px');
             heart.style.setProperty('--rot', (Math.random()*40-20)+'deg');
             document.body.appendChild(heart);
