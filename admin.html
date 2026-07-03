@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flip 7 Scoreboard - QUẢN TRÒ</title>
+    <title>Flip 7 Scoreboard - Admin Control V4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <style>
@@ -48,8 +48,8 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-700 pb-4 mb-6 gap-4">
             <div>
                 <div class="flex items-center gap-3 mb-1">
-                    <h1 class="text-3xl font-black text-red-500 tracking-wide">QUẢN TRÒ</h1>
-                    <span id="status-badge" class="status-badge status-playing">GAME ĐANG DIỄN RA</span>
+                    <h1 class="text-3xl font-black text-red-500 tracking-wide">ADMIN CONTROL V4</h1>
+                    <span id="status-badge" class="status-badge status-playing">🔥 ĐANG CHƠI</span>
                 </div>
                 <p class="text-sm text-gray-400">Click trực tiếp vào ô điểm để sửa. Tổng điểm tự tính.</p>
             </div>
@@ -82,6 +82,16 @@
             <p class="text-xs text-gray-500 mt-2">File Excel cần có cột "Người chơi" và các cột vòng đặt tên V1, V2, V3...</p>
         </div>
 
+        <!-- Reactions (Tim / Tim vỡ) -->
+        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 mb-6">
+            <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Reactions của Viewer</h3>
+            <div class="flex flex-wrap items-center gap-3">
+                <span class="text-sm text-gray-300">❤️ <span id="admin-heart-count" class="font-bold text-pink-400">0</span></span>
+                <span class="text-sm text-gray-300">💔 <span id="admin-heartbreak-count" class="font-bold text-slate-400">0</span></span>
+                <button id="btn-reset-reactions" class="ml-auto bg-pink-700 hover:bg-pink-800 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors">💖 Reset Reactions</button>
+            </div>
+        </div>
+
         <!-- Score matrix -->
         <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-xl">
             <div class="p-4 border-b border-gray-700 flex justify-between items-center">
@@ -108,7 +118,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey:"AIzaSyDUTKQK4mUKMBc-f8cnu-JAEhQ5XHZeg-E",
@@ -123,6 +133,7 @@
         const app    = initializeApp(firebaseConfig);
         const db     = getFirestore(app);
         const docRef = doc(db,"games","main");
+        const interactionsRef = doc(db,"games","interactions");
 
         // ── Avatar pool ──────────────────────────────────────────────────────
         // Đặt 18 file PNG vào assets/avatars/ với đúng tên trong danh sách này.
@@ -169,7 +180,7 @@
                         while(p.scores.length < gameState.rounds) p.scores.push(0);
                     });
                 } else {
-                    gameState = { rounds:1, players:[], status:"playing" };	
+                    gameState = { rounds:1, players:[], status:"playing" };
                     await setDoc(docRef, gameState);
                 }
                 renderAdminView();
@@ -185,7 +196,7 @@
                 badge.className = "status-badge status-ended";
                 endBtn.textContent = "▶️ Mở lại game";
             } else {
-                badge.textContent = "GAME ĐANG DIỄN RA";
+                badge.textContent = "🔥 ĐANG CHƠI";
                 badge.className = "status-badge status-playing";
                 endBtn.textContent = "🏁 Kết thúc game";
             }
@@ -432,6 +443,21 @@
                 await setDoc(docRef, gameState);
                 updateStatusBadge();
                 alert(isEnded ? "Game đã mở lại!" : "🏁 Game đã kết thúc! Viewer đang xem Winner Screen.");
+            } catch(e) { alert("Lỗi: "+e.message); }
+        });
+
+        // ── Reactions (Tim ❤️ / Tim vỡ 💔) ───────────────────────────────────
+        onSnapshot(interactionsRef, (snap) => {
+            const data = snap.exists() ? snap.data() : {};
+            document.getElementById('admin-heart-count').textContent = data.hearts || 0;
+            document.getElementById('admin-heartbreak-count').textContent = data.heartBreaks || 0;
+        });
+
+        document.getElementById('btn-reset-reactions').addEventListener('click', async () => {
+            if (!confirm("Reset toàn bộ Tim ❤️ và Tim vỡ 💔 về 0?")) return;
+            try {
+                await setDoc(interactionsRef, { hearts: 0, heartBreaks: 0 }, { merge: true });
+                alert("Đã reset Reactions về 0!");
             } catch(e) { alert("Lỗi: "+e.message); }
         });
     </script>

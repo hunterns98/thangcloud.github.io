@@ -348,32 +348,36 @@
             padding:8px 12px; margin-bottom:6px;
         }
 
-        /* ===== Heart button (floating, bottom-right) ===== */
-        #heart-fab {
+        /* ===== Reaction buttons (floating, bottom-right, side by side) ===== */
+        #reaction-bar {
             position:fixed; bottom:18px; right:18px; z-index:998;
+            display:flex; gap:10px;
+        }
+        .reaction-fab {
             width:56px; height:56px; border-radius:50%;
-            background:linear-gradient(135deg,#ef4444,#ec4899);
             display:flex; flex-direction:column; align-items:center; justify-content:center;
             border:none; cursor:pointer; overflow:visible;
-            box-shadow:0 8px 24px rgba(236,72,153,.5);
+            box-shadow:0 8px 24px rgba(0,0,0,.35);
             transition:transform .15s;
         }
-        #heart-fab:active { transform:scale(.88); }
-        #heart-fab .heart-icon { font-size:1.5rem; line-height:1; pointer-events:none; }
-        #heart-fab .heart-count {
+        .reaction-fab:active { transform:scale(.88); }
+        .reaction-fab .reaction-icon { font-size:1.5rem; line-height:1; pointer-events:none; }
+        .reaction-fab .reaction-count {
             font-size:.6rem; font-weight:800; color:#fff;
             line-height:1; margin-top:1px; pointer-events:none;
         }
+        #heart-fab       { background:linear-gradient(135deg,#ef4444,#ec4899); box-shadow:0 8px 24px rgba(236,72,153,.5); }
+        #heartbreak-fab   { background:linear-gradient(135deg,#475569,#1e293b); box-shadow:0 8px 24px rgba(71,85,105,.5); }
 
-        @keyframes heartFlyUp {
+        @keyframes reactionFlyUp {
             0%   { transform:translate(-50%,0) scale(.6) rotate(0deg); opacity:1; }
             70%  { opacity:1; }
             100% { transform:translate(calc(-50% + var(--drift,0px)),-160px) scale(1.15) rotate(var(--rot,12deg)); opacity:0; }
         }
-        .flying-heart {
-            position:fixed; left:50%; bottom:74px; z-index:997;
+        .flying-reaction {
+            position:fixed; bottom:74px; z-index:997;
             font-size:1.6rem; pointer-events:none;
-            animation:heartFlyUp 1.4s ease-out forwards;
+            animation:reactionFlyUp 1.4s ease-out forwards;
         }
     </style>
 </head>
@@ -401,18 +405,24 @@
     <div id="qr-popup-overlay">
         <div id="qr-popup-card">
             <button id="qr-popup-close" aria-label="Đóng">✕</button>
-            <p id="qr-popup-eyebrow">SCOREBOARD</p>
+            <p id="qr-popup-eyebrow">🎲 Flip 7 Live</p>
             <p id="qr-popup-title">Quét để xem bảng điểm</p>
             <div id="qr-popup-code"></div>
             <div id="qr-popup-link"></div>
         </div>
     </div>
 
-    <!-- Heart reaction button -->
-    <button id="heart-fab" title="Gửi tim">
-        <span class="heart-icon">💔</span>
-        <span class="heart-count" id="heart-count">0</span>
-    </button>
+    <!-- Reaction buttons -->
+    <div id="reaction-bar">
+        <button id="heart-fab" class="reaction-fab" title="Gửi tim">
+            <span class="reaction-icon">❤️</span>
+            <span class="reaction-count" id="heart-count">0</span>
+        </button>
+        <button id="heartbreak-fab" class="reaction-fab" title="Gửi tim vỡ">
+            <span class="reaction-icon">💔</span>
+            <span class="reaction-count" id="heartbreak-count">0</span>
+        </button>
+    </div>
 
     <!-- ===== WINNER SCREEN ===== -->
     <div id="winner-screen">
@@ -463,14 +473,14 @@
         <!-- Header -->
         <div class="flex flex-col items-center mb-4 text-center">
             <img src="assets/logo.png" class="w-32 md:w-48 mb-4 drop-shadow-2xl">
-            <h1 class="text-3xl md:text-6xl font-black text-yellow-400 tracking-widest">SCOREBOARD</h1>
+            <h1 class="text-3xl md:text-6xl font-black text-yellow-400 tracking-widest">🎲 FLIP 7 LIVE</h1>
         </div>
 
         <!-- Round banner -->
         <div id="round-banner">
             <div class="divider"></div>
             <div class="round-title" id="round-title-text">ROUND —</div>
-            <div class="round-status">ĐANG DIỄN RA</div>
+            <div class="round-status">🔥 ĐANG THI ĐẤU</div>
             <div class="divider"></div>
         </div>
 
@@ -638,7 +648,7 @@
             if(!isEnded) document.getElementById('winner-screen').classList.remove('show');
 
             // Round banner
-            document.getElementById('round-title-text').textContent=`VÒNG ${totalRounds}`;
+            document.getElementById('round-title-text').textContent=`🎲 ROUND ${totalRounds}`;
 
             // New round toast
             if(!firstLoad && totalRounds > prevRounds){
@@ -1012,52 +1022,61 @@
             if(e.target===qrOverlay) qrOverlay.classList.remove('show');
         });
 
-        // ── Heart reaction (tách riêng khỏi games/main, không đụng bảng điểm) ───
+        // ── Reactions: Tim ❤️ + Tim vỡ 💔 (tách riêng khỏi games/main, không đụng bảng điểm) ───
         const interactionsRef = doc(db,"games","interactions");
-        const heartCountEl = document.getElementById('heart-count');
-        const heartFab = document.getElementById('heart-fab');
 
-        function formatHeartCount(n){
+        function formatReactionCount(n){
             if(n>=1000000) return (n/1000000).toFixed(1).replace(/\.0$/,'')+'M';
             if(n>=1000)    return (n/1000).toFixed(1).replace(/\.0$/,'')+'K';
             return String(n);
         }
 
-        let lastKnownHearts=0;
-        onSnapshot(interactionsRef,(snap)=>{
-            const n = snap.exists() ? (snap.data().hearts||0) : 0;
-            heartCountEl.textContent = formatHeartCount(n);
-            // Nếu số tim tăng do người KHÁC bấm (không phải do chính mình vừa click),
-            // vẫn bay 1 tim nhẹ để cảm nhận có người vừa thích — nhưng tránh bay đôi với click của chính mình.
-            if(n>lastKnownHearts && !heartFab._justClicked){
-                spawnFlyingHeart();
-            }
-            lastKnownHearts = n;
-            heartFab._justClicked = false;
-        });
-
-        function spawnFlyingHeart(){
+        function spawnFlyingReaction(emoji, fromEl){
+            const rect=fromEl.getBoundingClientRect();
+            const centerX=rect.left+rect.width/2;
             const heart=document.createElement('div');
-            heart.className='flying-heart';
-            heart.textContent='💔';
+            heart.className='flying-reaction';
+            heart.textContent=emoji;
+            heart.style.left=centerX+'px';
             heart.style.setProperty('--drift', (Math.random()*60-30)+'px');
             heart.style.setProperty('--rot', (Math.random()*40-20)+'deg');
             document.body.appendChild(heart);
             setTimeout(()=>heart.remove(),1500);
         }
 
-        heartFab.addEventListener('click', async ()=>{
-            spawnFlyingHeart();
-            heartFab._justClicked = true;
-            heartFab.style.transform='scale(1.15)';
-            setTimeout(()=>{ heartFab.style.transform=''; },150);
-            try {
-                await setDoc(interactionsRef, { hearts: increment(1) }, { merge:true });
-            } catch(e){
-                // Nếu document chưa tồn tại lần đầu, increment() trên setDoc với merge vẫn tạo được field số;
-                // nếu vẫn lỗi (mất mạng...), bỏ qua êm, không làm phiền người xem bằng alert.
-                console.warn('Không gửi được tim:', e.message);
-            }
+        const REACTIONS=[
+            { field:'hearts',      emoji:'❤️', btn:document.getElementById('heart-fab'),      countEl:document.getElementById('heart-count'),      lastKnown:0 },
+            { field:'heartBreaks', emoji:'💔', btn:document.getElementById('heartbreak-fab'),  countEl:document.getElementById('heartbreak-count'), lastKnown:0 }
+        ];
+
+        onSnapshot(interactionsRef,(snap)=>{
+            const data = snap.exists() ? snap.data() : {};
+            REACTIONS.forEach(r=>{
+                const n = data[r.field]||0;
+                r.countEl.textContent = formatReactionCount(n);
+                // Nếu số tăng do người KHÁC bấm (không phải do chính mình vừa click),
+                // vẫn bay 1 reaction nhẹ để cảm nhận có người vừa tương tác — tránh bay đôi với click của chính mình.
+                if(n>r.lastKnown && !r.btn._justClicked){
+                    spawnFlyingReaction(r.emoji, r.btn);
+                }
+                r.lastKnown = n;
+                r.btn._justClicked = false;
+            });
+        });
+
+        REACTIONS.forEach(r=>{
+            r.btn.addEventListener('click', async ()=>{
+                spawnFlyingReaction(r.emoji, r.btn);
+                r.btn._justClicked = true;
+                r.btn.style.transform='scale(1.15)';
+                setTimeout(()=>{ r.btn.style.transform=''; },150);
+                try {
+                    await setDoc(interactionsRef, { [r.field]: increment(1) }, { merge:true });
+                } catch(e){
+                    // Nếu mất mạng hoặc lỗi tạm thời, bỏ qua êm, không làm phiền người xem bằng alert.
+                    console.warn('Không gửi được reaction:', e.message);
+                }
+            });
         });
 
     </script>
