@@ -295,8 +295,8 @@
             position:fixed; top:18px; left:18px; z-index:998;
             width:52px; height:52px; border-radius:50%;
             background:linear-gradient(135deg,#7c3aed,#db2777);
-            display:flex; align-items:center; justify-content:center;
-            font-size:1.4rem; cursor:pointer; border:none;
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            cursor:pointer; border:none;
             box-shadow:0 8px 24px rgba(124,58,237,.5);
             transition:transform .25s, box-shadow .25s;
         }
@@ -400,7 +400,10 @@
     </div>
 
     <!-- QR invite floating button -->
-    <button id="qr-fab" title="Mời bạn bè xem bảng điểm">📱</button>
+    <button id="qr-fab" title="Mời bạn bè xem bảng điểm">
+        <span style="font-size:1.3rem;line-height:1;pointer-events:none;">🔗</span>
+        <span style="font-size:.6rem;font-weight:800;color:#fff;letter-spacing:.04em;margin-top:2px;pointer-events:none;">MỜI</span>
+    </button>
 
     <div id="qr-popup-overlay">
         <div id="qr-popup-card">
@@ -494,8 +497,8 @@
             <div id="progress-winner-banner"></div>
         </div>
 
-        <!-- Hot Player + Last Place (horizontal scroll strip) -->
-        <div class="mb-6" id="stat-boxes">
+        <!-- Hot Player + Last Place (horizontal scroll strip, ẩn khi chưa đủ dữ liệu) -->
+        <div class="mb-6" id="stat-boxes" style="display:none;">
             <div class="stat-box">
                 <div class="sb-label text-orange-400">🔥 BAN TỔ CHỨC NGHI NGỜ SỰ MAY MẮN NÀY</div>
                 <div class="sb-name text-orange-300" id="hot-player-name">—</div>
@@ -512,11 +515,10 @@
         <div id="podium" class="grid grid-cols-3 gap-3 mb-8 text-center"></div>
 
         <!-- Score list (phone-friendly cards) -->
-        <div class="bg-gray-800 rounded-xl shadow-xl border border-gray-700 p-3">
-            <div id="player-cards">
-                <p class="text-center py-8 text-gray-400" id="cards-empty-msg">Đang kết nối Firestore...</p>
-            </div>
+        <div id="player-cards-wrapper" class="bg-gray-800 rounded-xl shadow-xl border border-gray-700 p-3" style="display:none;">
+            <div id="player-cards"></div>
         </div>
+        <p id="cards-empty-msg" class="text-center text-sm text-gray-500 py-2">Đang kết nối...</p>
     </div><!-- /app-container -->
 
     <!-- ===== FIREBASE + LOGIC ===== -->
@@ -626,12 +628,14 @@
                 currentData=snap.data();
                 renderScoreboard(currentData);
             } else {
-                document.getElementById('player-cards').innerHTML=
-                    `<p class="text-center py-8 text-red-400">Chưa có dữ liệu. Vào Admin để khởi tạo.</p>`;
+                document.getElementById('player-cards-wrapper').style.display='none';
+                document.getElementById('cards-empty-msg').style.display='block';
+                document.getElementById('cards-empty-msg').textContent='Chưa có dữ liệu. Vào Admin để khởi tạo.';
             }
         },(err)=>{
-            document.getElementById('player-cards').innerHTML=
-                `<p class="text-center py-8 text-red-400">Lỗi: ${err.message}</p>`;
+            document.getElementById('player-cards-wrapper').style.display='none';
+            document.getElementById('cards-empty-msg').style.display='block';
+            document.getElementById('cards-empty-msg').textContent=`Lỗi: ${err.message}`;
         });
 
         // ── Main render ───────────────────────────────────────────────────────
@@ -719,9 +723,9 @@
 
         // ── Hot Player ────────────────────────────────────────────────────────
         function renderHotPlayer(sorted, totalRounds){
+            const statBoxes = document.getElementById('stat-boxes');
             if(sorted.length===0 || totalRounds<2){
-                document.getElementById('hot-player-name').textContent='—';
-                document.getElementById('hot-player-sub').textContent='Cần ít nhất 2 vòng';
+                statBoxes.style.display='none';
                 return;
             }
             let hot=null, hotPts=0;
@@ -730,6 +734,7 @@
                 if(recent>hotPts){hotPts=recent;hot=p;}
             });
             if(hot){
+                statBoxes.style.display='flex';
                 document.getElementById('hot-player-name').innerHTML=`${getAvatar(hot)} ${hot.name}`;
                 document.getElementById('hot-player-sub').textContent=`+${hotPts} điểm trong 2 vòng gần nhất`;
             }
@@ -778,11 +783,18 @@
         // ── Player Cards (phone-friendly vertical list) ─────────────────────────
         function renderPlayerCards(sorted, totalRounds, changedRows){
             const container=document.getElementById('player-cards');
+            const wrapper=document.getElementById('player-cards-wrapper');
+            const emptyMsg=document.getElementById('cards-empty-msg');
 
             if(sorted.length===0){
-                container.innerHTML=`<p class="text-center py-8 text-gray-400">Chưa có người chơi.</p>`;
+                wrapper.style.display='none';
+                emptyMsg.style.display='block';
+                emptyMsg.textContent='Chưa có người chơi.';
                 return;
             }
+
+            wrapper.style.display='block';
+            emptyMsg.style.display='none';
 
             // Giữ lại tổng điểm cũ đang hiển thị trên DOM (nếu có) để animate count-up đúng giá trị,
             // tránh phải dựa hoàn toàn vào prevTotals (đã ghi đè trước khi hàm này được gọi).
@@ -928,7 +940,7 @@
         // ── Auto Commentator ──────────────────────────────────────────────────
         const COMMENTS=[
             "🤬 Đầu 3 tổng 9. VAR rồi VAR rồi.",
-            "🍚 Em ăn cơm chưa? Mà sao yếu thế 😏.",
+            "🍚 Em ăn cơm chưa? Mà sao yếu thế.",
             "👀 Hợp đồng kỳ nghỉ không em?",
             "🚨 Cố lên cố lên, sắp tới rồi sắp tới rồi.",
             "😤 Ê nha. Tôi nhắc em.",
@@ -938,22 +950,45 @@
             "🃏 Có vẻ bộ bài đang thiên vị ai đó.",
             "🤤 Doki Doki, Fuwa Fuwa, Oishikunare, Moe Moe Kun.",
             "😎 Đen tình đỏ bạc. Bạn đen cả hai.",
-            "😮‍💨 Một ngày thật tuyệt, tuyệt vọng!",
-            "😶‍🌫️ Họ cười tôi vì tôi khác họ. Tôi cười họ thì họ đấm tôi.",
             "❤️‍🩹 Là do em hiểu lầm! Cứ tưởng mình là love, ai ngờ đâu là lốp.",
-            "🕊️ Bây giờ em đã có chồng, như chim vào lồng như cá cắn câu.",
-            "🐟 Cá cắn câu biết đâu mà gỡ? Chim vào lồng biết ngày nào ra?",
-            "🔮 Những lúc buồn đời, điều bạn cần làm là đi xem bói.",
             "🤔 Ủa em?",
             "😂 Hư quá. Anh phạt đấy.",
-            "🚓 Của rẻ là của congan.",
             "👑 Đừng cúi đầu, vương miện sẽ rơi.",
             "🙀 Sống Nay Stress Mai.",
             "🦑 2, 3 con mực. Yêu em căng cực.",
             "🐟 Sẽ có những con cá phải giả chó.",
             "🖤🩷 Hồng Đen trong khu vực bạn đóoooo.",
-            "🤡 1 điều nhịn là 9 đứa ngồi lên đầu.",
-            "🐶 Trust me I'm a Dogtor."
+            "🐶 Trust me I'm a Dogtor.",
+            "🎯 Flip thêm lá nữa không? Số má đâu mà sợ.",
+            "🥵 Nóng. Bộ bài đang nóng. Người chơi cũng đang nóng theo.",
+            "🫠 Tưởng được rồi, ai dè bust giữa đường.",
+            "🎤 Em ơi đừng flip nữa, đừng flip nữa em ơi.",
+            "🧠 IQ vô cực mà sao chọn rút lá đó vậy ta.",
+            "🐸 Ếch ngồi đáy bảng điểm, tưởng đời là vại.",
+            "💅 Để yên cho người ta lo điểm số.",
+            "🚪 Một là vô, hai là dô luôn không cần do dự.",
+            "🎢 Lên voi xuống chó nhanh hơn cả tàu lượn.",
+            "🧊 Lạnh. Quá lạnh. Mà điểm cũng đứng im không tăng.",
+            "🪦 RIP điểm số. Mất lúc nào không ai hay.",
+            "🤡 Cười đi rồi flip tiếp, đời còn dài.",
+            "🐍 Ai nói rút lá an toàn, tự rút Flip 7 thì biết.",
+            "🛑 Stop! Đủ rồi đó, đừng tham thêm.",
+            "🌪️ Xoay như chong chóng mà điểm vẫn chưa nhích.",
+            "🥲 Tưởng làm vua một cõi, hóa ra làm chúa một vòng.",
+            "🎰 Đời là canh bạc, bạc rồi mới biết đời.",
+            "🐢 Chậm mà chắc à? Chắc rớt thì có.",
+            "👻 Số má kiểu này chắc có ai khuất mặt giúp đỡ.",
+            "🍿 Ngồi coi drama bảng điểm còn hay hơn phim.",
+            "🤝 Đồng cảnh ngộ, đồng top đáy. Kết bạn không?",
+            "🌶️ Cay. Quá cay. Mà không phải vì đồ ăn.",
+            "🎁 Mở quà mà như mở bom, hên xui đủ cả.",
+            "🦋 Bay nhẹ như cánh bướm, rớt đau như cú đấm.",
+            "🧨 Nổ rồi! Mà nổ kiểu... không phải kiểu mong muốn.",
+            "🐔 Đừng gáy sớm, vòng cuối mới biết ai cười ai khóc.",
+            "🎭 Mặt thì tỉnh queo, tay thì run như muốn rớt bài.",
+            "🛎️ Ting ting, có người vừa đổi vận nè.",
+            "🌊 Sóng sau xô sóng trước, top đầu đổi chủ liên tục.",
+            "🍀 May mắn không tự nhiên mà có, nhưng người này hình như có thật."
         ];
         // Bag-shuffle: xáo trộn toàn bộ danh sách quote, chạy hết "túi" rồi mới xáo lại,
         // đảm bảo không câu nào lặp lại sớm trong cùng 1 vòng (khác với random thuần dễ bị trúng lại liên tục).
