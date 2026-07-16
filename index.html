@@ -408,7 +408,7 @@
     <div id="qr-popup-overlay">
         <div id="qr-popup-card">
             <button id="qr-popup-close" aria-label="Đóng">✕</button>
-            <p id="qr-popup-eyebrow">🎲 Flip 7 Live</p>
+            <p id="qr-popup-eyebrow">LIVE SCOREBOARD</p>
             <p id="qr-popup-title">Quét để xem bảng điểm</p>
             <div id="qr-popup-code"></div>
             <div id="qr-popup-link"></div>
@@ -476,14 +476,14 @@
         <!-- Header -->
         <div class="flex flex-col items-center mb-4 text-center">
             <img src="assets/logo.png" class="w-32 md:w-48 mb-4 drop-shadow-2xl">
-            <h1 class="text-3xl md:text-6xl font-black text-yellow-400 tracking-widest">🎲 FLIP 7 LIVE</h1>
+            <h1 class="text-3xl md:text-6xl font-black text-yellow-400 tracking-widest">LIVE SCOREBOARD</h1>
         </div>
 
         <!-- Round banner -->
         <div id="round-banner">
             <div class="divider"></div>
             <div class="round-title" id="round-title-text">ROUND —</div>
-            <div class="round-status">🔥 ĐANG THI ĐẤU</div>
+            <div class="round-status">🔥 ĐANG DIỄN RA</div>
             <div class="divider"></div>
         </div>
 
@@ -652,7 +652,7 @@
             if(!isEnded) document.getElementById('winner-screen').classList.remove('show');
 
             // Round banner
-            document.getElementById('round-title-text').textContent=`🎲 ROUND ${totalRounds}`;
+            document.getElementById('round-title-text').textContent=`VÒNG ${totalRounds}`;
 
             // New round toast
             if(!firstLoad && totalRounds > prevRounds){
